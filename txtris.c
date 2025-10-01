@@ -70,7 +70,6 @@ void init_ncurses(void) {
 	init_pair(CITRUS_COLOUR_L + 2, -1, COLOR_BLUE);
 	init_pair(CITRUS_COLOUR_J + 2, -1, COLOR_YELLOW);
 	init_pair(CITRUS_COLOUR_I + 2, -1, COLOR_CYAN);
-	timeout(0);
 }
 
 int main() {
