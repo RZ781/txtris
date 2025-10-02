@@ -21,6 +21,8 @@
 #include <unistd.h>
 #include <time.h>
 #include <ncurses.h>
+#include <poll.h>
+#include <sys/types.h>
 #include "citrus.h"
 
 CitrusCell board[10 * 40];
@@ -77,23 +79,46 @@ int main() {
 	init_ncurses();
 	WINDOW* win = newwin(42, 22, 4, 2);
 	update(win, board);
+	double time_since_tick = 0;
+	struct timespec curr_time, prev_time;
+	clock_gettime(CLOCK_MONOTONIC, &curr_time);
+	int ticks = 0;
 	while (CitrusGame_is_alive(&game)) {
-		int c = getch();
-		int key = -1;
-		if (c == KEY_LEFT) {
-			key = CITRUS_KEY_LEFT;
-		} else if (c == KEY_RIGHT) {
-			key = CITRUS_KEY_RIGHT;
-		} else if (c == KEY_DOWN) {
-			key = CITRUS_KEY_SOFT_DROP;
-		} else if (c == ' ') {
-			key = CITRUS_KEY_HARD_DROP;
-		} else if (c == 'z') {
-			key = CITRUS_KEY_ANTICLOCKWISE;
-		} else if (c == 'x') {
-			key = CITRUS_KEY_CLOCKWISE;
+		struct pollfd fd = {STDIN_FILENO, POLLIN, 0};
+		int ms_timeout = (1.0 / 60.0 - time_since_tick) * 1e3;
+		if (ms_timeout < 0)
+			ms_timeout = 0;
+		if (poll(&fd, 1, ms_timeout) == -1) {
+			perror("poll");
+			exit(-1);
 		}
-		CitrusGame_key_down(&game, key);
+		if (fd.revents & POLLIN) {
+			int c = getch();
+			int key = -1;
+			if (c == KEY_LEFT) {
+				key = CITRUS_KEY_LEFT;
+			} else if (c == KEY_RIGHT) {
+				key = CITRUS_KEY_RIGHT;
+			} else if (c == KEY_DOWN) {
+				key = CITRUS_KEY_SOFT_DROP;
+			} else if (c == ' ') {
+				key = CITRUS_KEY_HARD_DROP;
+			} else if (c == 'z') {
+				key = CITRUS_KEY_ANTICLOCKWISE;
+			} else if (c == 'x') {
+				key = CITRUS_KEY_CLOCKWISE;
+			}
+			CitrusGame_key_down(&game, key);
+		}
+		prev_time = curr_time;
+		clock_gettime(CLOCK_MONOTONIC, &curr_time);
+		time_since_tick += curr_time.tv_sec - prev_time.tv_sec;
+		time_since_tick += (curr_time.tv_nsec - prev_time.tv_nsec) / 1e9;
+		while (time_since_tick >= 1.0 / 60.0) {
+			time_since_tick -= 1.0 / 60.0;
+			CitrusGame_tick(&game);
+			ticks++;
+		}
 		update(win, board);
 	}
 	mvprintw(2, 2, "You died");
