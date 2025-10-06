@@ -35,7 +35,7 @@ void update(WINDOW* win, CitrusCell* board) {
 			CitrusCell cell = board[y * 10 + x];
 			int ch;
 			if (cell.type == CITRUS_CELL_FULL)
-				ch = ' ' | COLOR_PAIR(cell.colour + 2);
+				ch = ' ' | COLOR_PAIR(cell.color + 2);
 			else if (cell.type == CITRUS_CELL_SHADOW)
 				ch = ' ' | COLOR_PAIR(1);
 			else
@@ -65,13 +65,13 @@ void init_ncurses(void) {
 	keypad(stdscr, TRUE);
 	start_color();
 	init_pair(1, -1, COLOR_WHITE);
-	init_pair(CITRUS_COLOUR_O + 2, -1, COLOR_YELLOW);
-	init_pair(CITRUS_COLOUR_T + 2, -1, COLOR_MAGENTA);
-	init_pair(CITRUS_COLOUR_S + 2, -1, COLOR_GREEN);
-	init_pair(CITRUS_COLOUR_Z + 2, -1, COLOR_RED);
-	init_pair(CITRUS_COLOUR_L + 2, -1, COLOR_BLUE);
-	init_pair(CITRUS_COLOUR_J + 2, -1, COLOR_YELLOW);
-	init_pair(CITRUS_COLOUR_I + 2, -1, COLOR_CYAN);
+	init_pair(CITRUS_COLOR_O + 2, -1, COLOR_YELLOW);
+	init_pair(CITRUS_COLOR_T + 2, -1, COLOR_MAGENTA);
+	init_pair(CITRUS_COLOR_S + 2, -1, COLOR_GREEN);
+	init_pair(CITRUS_COLOR_Z + 2, -1, COLOR_RED);
+	init_pair(CITRUS_COLOR_L + 2, -1, COLOR_BLUE);
+	init_pair(CITRUS_COLOR_J + 2, -1, COLOR_YELLOW);
+	init_pair(CITRUS_COLOR_I + 2, -1, COLOR_CYAN);
 }
 
 int main() {
