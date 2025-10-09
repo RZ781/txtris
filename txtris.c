@@ -69,8 +69,8 @@ void init_ncurses(void) {
 	init_pair(CITRUS_COLOR_T + 2, -1, COLOR_MAGENTA);
 	init_pair(CITRUS_COLOR_S + 2, -1, COLOR_GREEN);
 	init_pair(CITRUS_COLOR_Z + 2, -1, COLOR_RED);
-	init_pair(CITRUS_COLOR_L + 2, -1, COLOR_BLUE);
-	init_pair(CITRUS_COLOR_J + 2, -1, COLOR_YELLOW);
+	init_pair(CITRUS_COLOR_L + 2, -1, COLOR_YELLOW);
+	init_pair(CITRUS_COLOR_J + 2, -1, COLOR_BLUE);
 	init_pair(CITRUS_COLOR_I + 2, -1, COLOR_CYAN);
 }
 
