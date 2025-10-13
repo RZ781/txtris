@@ -25,14 +25,18 @@
 #include <sys/types.h>
 #include "citrus.h"
 
-CitrusCell board[10 * 40];
+const char* program_name;
+int width = 10;
+int height = 20;
+int full_height = 40;
+CitrusCell* board;
 CitrusGame game;
 CitrusBagRandomizer bag;
 
 void update(WINDOW* win, CitrusCell* board) {
-	for (int y=0; y<40; y++) {
-		for (int x=0; x<10; x++) {
-			CitrusCell cell = board[y * 10 + x];
+	for (int y=0; y<full_height; y++) {
+		for (int x=0; x<width; x++) {
+			CitrusCell cell = board[y * width + x];
 			int ch;
 			if (cell.type == CITRUS_CELL_FULL)
 				ch = ' ' | COLOR_PAIR(cell.color + 2);
@@ -40,8 +44,8 @@ void update(WINDOW* win, CitrusCell* board) {
 				ch = ' ' | COLOR_PAIR(1);
 			else
 				ch = ' ' | COLOR_PAIR(0);
-			mvwaddch(win, 40 - y, x * 2 + 1, ch);
-			mvwaddch(win, 40 - y, x * 2 + 2, ch);
+			mvwaddch(win, full_height - y, x * 2 + 1, ch);
+			mvwaddch(win, full_height - y, x * 2 + 2, ch);
 		}
 	}
 	box(win, 0, 0);
@@ -49,11 +53,15 @@ void update(WINDOW* win, CitrusCell* board) {
 	wrefresh(win);
 }
 
-void init_citrus() {
+void init_citrus(int width, int height, int full_height) {
 	srand(time(NULL));
 	CitrusBagRandomizer_init(&bag, rand());
 	CitrusGameConfig config;
 	CitrusGameConfig_init(&config, CitrusBagRandomizer_randomizer);
+	config.width = width;
+	config.height = height;
+	config.full_height = full_height;
+	board = malloc(sizeof(CitrusCell) * full_height * width);
 	CitrusGame_init(&game, board, config, &bag);
 }
 
@@ -75,10 +83,39 @@ void init_ncurses(void) {
 	curs_set(0);
 }
 
-int main() {
-	init_citrus();
+int string_to_int(const char* s) {
+	char* endptr;
+	int i = strtol(optarg, &endptr, 10);
+	if (endptr == optarg || *endptr != '\0') {
+		fprintf(stderr, "%s: invalid integer %s", program_name, s);
+		exit(-1);
+	}
+	return i;
+}
+
+int main(int argc, char** argv) {
+	program_name = argv[0];
+	int c;
+	while ((c = getopt(argc, argv, "f:h:w:")) != -1) {
+		switch (c) {
+			case 'w':
+				width = string_to_int(optarg);
+				break;
+			case 'h':
+				height = string_to_int(optarg);
+				break;
+			case 'f':
+				full_height = string_to_int(optarg);
+				break;
+			case '?':
+				exit(-1);
+			default:
+				break;
+		}
+	}
+	init_citrus(width, height, full_height);
 	init_ncurses();
-	WINDOW* win = newwin(42, 22, 4, 2);
+	WINDOW* win = newwin(full_height + 2, width*2 + 2, 4, 2);
 	update(win, board);
 	double time_since_tick = 0;
 	struct timespec curr_time, prev_time;
@@ -126,5 +163,6 @@ int main() {
 	refresh();
 	sleep(5);
 	endwin();
+	free(board);
 	return 0;
 }
