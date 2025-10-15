@@ -18,7 +18,12 @@
 # along with this program.  If not, see
 # <https://www.gnu.org/licenses/>.
 
-cd libcitrus || exit $?
-./build || exit $?
-cd .. || exit $?
-gcc -Wall -Wextra -Wpedantic -Ilibcitrus/include txtris.c -Llibcitrus -lncurses -o txtris -Wl,-Bstatic -lcitrus -Wl,-Bdynamic || exit $?
+
+if [ -z "$LIBCITRUS_PATH" ] ; then
+	LIBCITRUS_PATH=libcitrus
+	cd libcitrus || exit $?
+	./build || exit $?
+	cd .. || exit $?
+fi
+
+gcc -Wall -Wextra -Wpedantic -I"$LIBCITRUS_PATH"/include txtris.c -L"$LIBCITRUS_PATH" -lncurses -o txtris -Wl,-Bstatic -lcitrus -Wl,-Bdynamic || exit $?
