@@ -133,18 +133,13 @@ int main(int argc, char** argv) {
 		if (fd.revents & POLLIN) {
 			int c = getch();
 			int key = -1;
-			if (c == KEY_LEFT) {
-				key = CITRUS_KEY_LEFT;
-			} else if (c == KEY_RIGHT) {
-				key = CITRUS_KEY_RIGHT;
-			} else if (c == KEY_DOWN) {
-				key = CITRUS_KEY_SOFT_DROP;
-			} else if (c == ' ') {
-				key = CITRUS_KEY_HARD_DROP;
-			} else if (c == 'z') {
-				key = CITRUS_KEY_ANTICLOCKWISE;
-			} else if (c == 'x') {
-				key = CITRUS_KEY_CLOCKWISE;
+			switch (c) {
+				case KEY_LEFT: key = CITRUS_KEY_LEFT; break;
+				case KEY_RIGHT: key = CITRUS_KEY_RIGHT; break;
+				case KEY_DOWN: key = CITRUS_KEY_SOFT_DROP; break;
+				case ' ': key = CITRUS_KEY_HARD_DROP; break;
+				case 'z': key = CITRUS_KEY_ANTICLOCKWISE; break;
+				case 'x': case KEY_UP: key = CITRUS_KEY_CLOCKWISE; break;
 			}
 			CitrusGame_key_down(&game, key);
 		}
