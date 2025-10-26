@@ -33,10 +33,11 @@ CitrusCell* board;
 CitrusGame game;
 CitrusBagRandomizer bag;
 
-void update(WINDOW* win, CitrusCell* board) {
-	for (int y=0; y<full_height; y++) {
-		for (int x=0; x<width; x++) {
-			CitrusCell cell = board[y * width + x];
+void update_window(WINDOW* win, const CitrusCell* data, int height, int width, int y_offset, int x_offset) {
+	werase(win);
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			CitrusCell cell = data[y * width + x];
 			int ch;
 			if (cell.type == CITRUS_CELL_FULL)
 				ch = ' ' | COLOR_PAIR(cell.color + 2);
@@ -44,13 +45,25 @@ void update(WINDOW* win, CitrusCell* board) {
 				ch = ' ' | COLOR_PAIR(1);
 			else
 				ch = ' ' | COLOR_PAIR(0);
-			mvwaddch(win, full_height - y, x * 2 + 1, ch);
-			mvwaddch(win, full_height - y, x * 2 + 2, ch);
+			mvwaddch(win, height - y + y_offset, x * 2 + 1 + x_offset, ch);
+			mvwaddch(win, height - y + y_offset, x * 2 + 2 + x_offset, ch);
 		}
 	}
 	box(win, 0, 0);
 	refresh();
 	wrefresh(win);
+}
+
+void update(WINDOW* board_win, WINDOW* hold_win) {
+	update_window(board_win, board, full_height, width, 0, 0);
+	if (game.hold_piece == NULL) {
+		update_window(hold_win, NULL, 0, 0, 0, 0);
+	} else {
+		const CitrusCell* data = game.hold_piece->piece_data;
+		int height = game.hold_piece->height;
+		int width = game.hold_piece->width;
+		update_window(hold_win, data, height, width, height >= 4 ? 0 : 1, 4 - height);
+	}
 }
 
 void init_citrus(int width, int height, int full_height) {
@@ -115,8 +128,9 @@ int main(int argc, char** argv) {
 	}
 	init_citrus(width, height, full_height);
 	init_ncurses();
-	WINDOW* win = newwin(full_height + 2, width*2 + 2, 4, 2);
-	update(win, board);
+	WINDOW* hold_win = newwin(6, 10, 4, 2);
+	WINDOW* board_win = newwin(full_height + 2, width*2 + 2, 4, 12);
+	update(board_win, hold_win);
 	double time_since_tick = 0;
 	struct timespec curr_time, prev_time;
 	clock_gettime(CLOCK_MONOTONIC, &curr_time);
@@ -153,7 +167,7 @@ int main(int argc, char** argv) {
 			CitrusGame_tick(&game);
 			ticks++;
 		}
-		update(win, board);
+		update(board_win, hold_win);
 	}
 	mvprintw(2, 2, "You died");
 	refresh();
