@@ -29,6 +29,7 @@ const char* program_name;
 int width = 10;
 int height = 20;
 int full_height = 40;
+int gravity = 1;
 CitrusCell* board;
 CitrusGame game;
 CitrusBagRandomizer bag;
@@ -66,7 +67,7 @@ void update(WINDOW* board_win, WINDOW* hold_win) {
 	}
 }
 
-void init_citrus(int width, int height, int full_height) {
+void init_citrus() {
 	srand(time(NULL));
 	CitrusBagRandomizer_init(&bag, rand());
 	CitrusGameConfig config;
@@ -74,6 +75,7 @@ void init_citrus(int width, int height, int full_height) {
 	config.width = width;
 	config.height = height;
 	config.full_height = full_height;
+	config.gravity = 1.0 / 60.0 * gravity;
 	board = malloc(sizeof(CitrusCell) * full_height * width);
 	CitrusGame_init(&game, board, config, &bag);
 }
@@ -109,7 +111,7 @@ int string_to_int(const char* s) {
 int main(int argc, char** argv) {
 	program_name = argv[0];
 	int c;
-	while ((c = getopt(argc, argv, "f:h:w:")) != -1) {
+	while ((c = getopt(argc, argv, "f:h:w:g:")) != -1) {
 		switch (c) {
 			case 'w':
 				width = string_to_int(optarg);
@@ -120,13 +122,16 @@ int main(int argc, char** argv) {
 			case 'f':
 				full_height = string_to_int(optarg);
 				break;
+			case 'g':
+				gravity = string_to_int(optarg);
+				break;
 			case '?':
 				exit(-1);
 			default:
 				break;
 		}
 	}
-	init_citrus(width, height, full_height);
+	init_citrus();
 	init_ncurses();
 	WINDOW* hold_win = newwin(6, 10, 4, 2);
 	WINDOW* board_win = newwin(full_height + 2, width*2 + 2, 4, 12);
