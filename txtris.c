@@ -33,9 +33,9 @@ int gravity = 1;
 CitrusCell* board;
 CitrusGame game;
 CitrusBagRandomizer bag;
+const CitrusPiece* next_piece_queue[3];
 
 void update_window(WINDOW* win, const CitrusCell* data, int height, int width, int y_offset, int x_offset) {
-	werase(win);
 	for (int y = 0; y < height; y++) {
 		for (int x = 0; x < width; x++) {
 			CitrusCell cell = data[y * width + x];
@@ -55,7 +55,10 @@ void update_window(WINDOW* win, const CitrusCell* data, int height, int width, i
 	wrefresh(win);
 }
 
-void update(WINDOW* board_win, WINDOW* hold_win) {
+void update(WINDOW* board_win, WINDOW* hold_win, WINDOW* next_piece_win) {
+	werase(board_win);
+	werase(hold_win);
+	werase(next_piece_win);
 	update_window(board_win, board, full_height, width, 0, 0);
 	if (game.hold_piece == NULL) {
 		update_window(hold_win, NULL, 0, 0, 0, 0);
@@ -64,6 +67,13 @@ void update(WINDOW* board_win, WINDOW* hold_win) {
 		int height = game.hold_piece->height;
 		int width = game.hold_piece->width;
 		update_window(hold_win, data, height, width, height >= 4 ? 0 : 1, 4 - height);
+	}
+	for (int i = 0; i < 3; i++) {
+		const CitrusPiece* piece = CitrusGame_get_next_piece(&game, i);
+		const CitrusCell* data = piece->piece_data;
+		int height = piece->height;
+		int width = piece->width;
+		update_window(next_piece_win, data, height, width, (height >= 4 ? 0 : 1) + i * 4, 4 - height);
 	}
 }
 
@@ -77,7 +87,7 @@ void init_citrus() {
 	config.full_height = full_height;
 	config.gravity = 1.0 / 60.0 * gravity;
 	board = malloc(sizeof(CitrusCell) * full_height * width);
-	CitrusGame_init(&game, board, config, &bag);
+	CitrusGame_init(&game, board, next_piece_queue, config, &bag);
 }
 
 void init_ncurses(void) {
@@ -134,8 +144,9 @@ int main(int argc, char** argv) {
 	init_citrus();
 	init_ncurses();
 	WINDOW* hold_win = newwin(6, 10, 4, 2);
-	WINDOW* board_win = newwin(full_height + 2, width*2 + 2, 4, 12);
-	update(board_win, hold_win);
+	WINDOW* board_win = newwin(full_height + 2, width * 2 + 2, 4, 12);
+	WINDOW* next_piece_win = newwin(14, 10, 4, width * 2 + 14);
+	update(board_win, hold_win, next_piece_win);
 	double time_since_tick = 0;
 	struct timespec curr_time, prev_time;
 	clock_gettime(CLOCK_MONOTONIC, &curr_time);
@@ -172,7 +183,7 @@ int main(int argc, char** argv) {
 			CitrusGame_tick(&game);
 			ticks++;
 		}
-		update(board_win, hold_win);
+		update(board_win, hold_win, next_piece_win);
 	}
 	mvprintw(2, 2, "You died");
 	refresh();
