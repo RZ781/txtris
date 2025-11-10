@@ -30,10 +30,11 @@ int width = 10;
 int height = 20;
 int full_height = 40;
 int gravity = 1;
+int next_piece_queue_size = 3;
+const CitrusPiece** next_piece_queue;
 CitrusCell* board;
 CitrusGame game;
 CitrusBagRandomizer bag;
-const CitrusPiece* next_piece_queue[3];
 
 void update_window(WINDOW* win, const CitrusCell* data, int height, int width, int y_offset, int x_offset) {
 	for (int y = 0; y < height; y++) {
@@ -68,7 +69,7 @@ void update(WINDOW* board_win, WINDOW* hold_win, WINDOW* next_piece_win) {
 		int width = game.hold_piece->width;
 		update_window(hold_win, data, height, width, height >= 4 ? 0 : 1, 4 - height);
 	}
-	for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < next_piece_queue_size; i++) {
 		const CitrusPiece* piece = CitrusGame_get_next_piece(&game, i);
 		const CitrusCell* data = piece->piece_data;
 		int height = piece->height;
@@ -86,7 +87,9 @@ void init_citrus() {
 	config.height = height;
 	config.full_height = full_height;
 	config.gravity = 1.0 / 60.0 * gravity;
+	config.next_piece_queue_size = next_piece_queue_size;
 	board = malloc(sizeof(CitrusCell) * full_height * width);
+	next_piece_queue = malloc(sizeof(CitrusPiece*) * next_piece_queue_size);
 	CitrusGame_init(&game, board, next_piece_queue, config, &bag);
 }
 
@@ -121,7 +124,7 @@ int string_to_int(const char* s) {
 int main(int argc, char** argv) {
 	program_name = argv[0];
 	int c;
-	while ((c = getopt(argc, argv, "f:h:w:g:")) != -1) {
+	while ((c = getopt(argc, argv, "f:h:w:g:q:")) != -1) {
 		switch (c) {
 			case 'w':
 				width = string_to_int(optarg);
@@ -135,6 +138,9 @@ int main(int argc, char** argv) {
 			case 'g':
 				gravity = string_to_int(optarg);
 				break;
+			case 'q':
+				next_piece_queue_size = string_to_int(optarg);
+				break;
 			case '?':
 				exit(-1);
 			default:
@@ -145,7 +151,7 @@ int main(int argc, char** argv) {
 	init_ncurses();
 	WINDOW* hold_win = newwin(6, 10, 4, 2);
 	WINDOW* board_win = newwin(full_height + 2, width * 2 + 2, 4, 12);
-	WINDOW* next_piece_win = newwin(14, 10, 4, width * 2 + 14);
+	WINDOW* next_piece_win = newwin(2 + 4 * next_piece_queue_size, 10, 4, width * 2 + 14);
 	update(board_win, hold_win, next_piece_win);
 	double time_since_tick = 0;
 	struct timespec curr_time, prev_time;
@@ -190,5 +196,6 @@ int main(int argc, char** argv) {
 	sleep(5);
 	endwin();
 	free(board);
+	free(next_piece_queue);
 	return 0;
 }
