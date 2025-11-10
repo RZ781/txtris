@@ -111,11 +111,15 @@ void init_ncurses(void) {
 	curs_set(0);
 }
 
-int string_to_int(const char* s) {
+int string_to_int(const char* s, int minimum) {
 	char* endptr;
 	int i = strtol(optarg, &endptr, 10);
 	if (endptr == optarg || *endptr != '\0') {
-		fprintf(stderr, "%s: invalid integer %s", program_name, s);
+		fprintf(stderr, "%s: invalid number %s\n", program_name, s);
+		exit(-1);
+	}
+	if (i < minimum) {
+		fprintf(stderr, "%s: %i is too small\n", program_name, i);
 		exit(-1);
 	}
 	return i;
@@ -127,19 +131,19 @@ int main(int argc, char** argv) {
 	while ((c = getopt(argc, argv, "f:h:w:g:q:")) != -1) {
 		switch (c) {
 			case 'w':
-				width = string_to_int(optarg);
+				width = string_to_int(optarg, 4);
 				break;
 			case 'h':
-				height = string_to_int(optarg);
+				height = string_to_int(optarg, -1);
 				break;
 			case 'f':
-				full_height = string_to_int(optarg);
+				full_height = string_to_int(optarg, 3);
 				break;
 			case 'g':
-				gravity = string_to_int(optarg);
+				gravity = string_to_int(optarg, 0);
 				break;
 			case 'q':
-				next_piece_queue_size = string_to_int(optarg);
+				next_piece_queue_size = string_to_int(optarg, 1);
 				break;
 			case '?':
 				exit(-1);
