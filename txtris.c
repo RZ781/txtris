@@ -143,7 +143,7 @@ int main(int argc, char** argv) {
 				gravity = string_to_int(optarg, 0);
 				break;
 			case 'q':
-				next_piece_queue_size = string_to_int(optarg, 1);
+				next_piece_queue_size = string_to_int(optarg, 0);
 				break;
 			case '?':
 				exit(-1);
