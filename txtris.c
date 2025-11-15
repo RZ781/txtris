@@ -52,8 +52,7 @@ void update_window(WINDOW* win, const CitrusCell* data, int height, int width, i
 		}
 	}
 	box(win, 0, 0);
-	refresh();
-	wrefresh(win);
+	wnoutrefresh(win);
 }
 
 void update(WINDOW* board_win, WINDOW* hold_win, WINDOW* next_piece_win) {
@@ -76,6 +75,7 @@ void update(WINDOW* board_win, WINDOW* hold_win, WINDOW* next_piece_win) {
 		int width = piece->width;
 		update_window(next_piece_win, data, height, width, (height >= 4 ? 0 : 1) + i * 4, 4 - height);
 	}
+	doupdate();
 }
 
 void init_citrus() {
