@@ -28,7 +28,7 @@
 const char* program_name;
 int width = 10;
 int height = 20;
-int full_height = 40;
+int full_height = 0;
 int gravity = 1;
 int next_piece_queue_size = 3;
 const CitrusPiece** next_piece_queue;
@@ -150,6 +150,14 @@ int main(int argc, char** argv) {
 			default:
 				break;
 		}
+	}
+	if (full_height == 0) {
+		int extra_height = height;
+		if (extra_height < 4)
+			extra_height = 4;
+		if (extra_height > 20)
+			extra_height = 20;
+		full_height = height + extra_height;
 	}
 	init_citrus();
 	init_ncurses();
