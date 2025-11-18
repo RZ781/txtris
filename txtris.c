@@ -17,12 +17,13 @@
  * <https://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <time.h>
+#include <errno.h>
 #include <ncurses.h>
 #include <poll.h>
+#include <stdlib.h>
 #include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
 #include "citrus.h"
 
 const char* program_name;
@@ -174,7 +175,7 @@ int main(int argc, char** argv) {
 		int ms_timeout = (1.0 / 60.0 - time_since_tick) * 1e3;
 		if (ms_timeout < 0)
 			ms_timeout = 0;
-		if (poll(&fd, 1, ms_timeout) == -1) {
+		if (poll(&fd, 1, ms_timeout) == -1 && errno != EINTR) {
 			perror("poll");
 			exit(-1);
 		}
