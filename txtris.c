@@ -31,6 +31,7 @@ int width = 10;
 int height = 20;
 int full_height = 0;
 int gravity = 1;
+int lock_delay = 30;
 int next_piece_queue_size = 3;
 const CitrusPiece** next_piece_queue;
 CitrusCell* board;
@@ -89,6 +90,7 @@ void init_citrus() {
 	config.full_height = full_height;
 	config.gravity = 1.0 / 60.0 * gravity;
 	config.next_piece_queue_size = next_piece_queue_size;
+	config.lock_delay = lock_delay;
 	board = malloc(sizeof(CitrusCell) * full_height * width);
 	next_piece_queue = malloc(sizeof(CitrusPiece*) * next_piece_queue_size);
 	CitrusGame_init(&game, board, next_piece_queue, config, &bag);
@@ -129,7 +131,7 @@ int string_to_int(const char* s, int minimum) {
 int main(int argc, char** argv) {
 	program_name = argv[0];
 	int c;
-	while ((c = getopt(argc, argv, "f:h:w:g:q:")) != -1) {
+	while ((c = getopt(argc, argv, "f:h:w:g:q:l:")) != -1) {
 		switch (c) {
 			case 'w':
 				width = string_to_int(optarg, 4);
@@ -142,6 +144,9 @@ int main(int argc, char** argv) {
 				break;
 			case 'g':
 				gravity = string_to_int(optarg, 0);
+				break;
+			case 'l':
+				lock_delay = string_to_int(optarg, 1);
 				break;
 			case 'q':
 				next_piece_queue_size = string_to_int(optarg, 0);
