@@ -27,13 +27,8 @@
 #include "citrus.h"
 
 const char* program_name;
-int width = 10;
-int height = 20;
-int full_height = 0;
-int gravity = 1;
-int lock_delay = 30;
-int next_piece_queue_size = 3;
 const CitrusPiece** next_piece_queue;
+CitrusGameConfig config;
 CitrusCell* board;
 CitrusGame game;
 CitrusBagRandomizer bag;
@@ -61,7 +56,7 @@ void update(WINDOW* board_win, WINDOW* hold_win, WINDOW* next_piece_win) {
 	werase(board_win);
 	werase(hold_win);
 	werase(next_piece_win);
-	update_window(board_win, board, full_height, width, 0, 0);
+	update_window(board_win, board, config.full_height, config.width, 0, 0);
 	if (game.hold_piece == NULL) {
 		update_window(hold_win, NULL, 0, 0, 0, 0);
 	} else {
@@ -70,7 +65,7 @@ void update(WINDOW* board_win, WINDOW* hold_win, WINDOW* next_piece_win) {
 		int width = game.hold_piece->width;
 		update_window(hold_win, data, height, width, height >= 4 ? 0 : 1, 4 - height);
 	}
-	for (int i = 0; i < next_piece_queue_size; i++) {
+	for (int i = 0; i < config.next_piece_queue_size; i++) {
 		const CitrusPiece* piece = CitrusGame_get_next_piece(&game, i);
 		const CitrusCell* data = piece->piece_data;
 		int height = piece->height;
@@ -83,16 +78,8 @@ void update(WINDOW* board_win, WINDOW* hold_win, WINDOW* next_piece_win) {
 void init_citrus() {
 	srand(time(NULL));
 	CitrusBagRandomizer_init(&bag, rand());
-	CitrusGameConfig config;
-	CitrusGameConfig_init(&config, CitrusBagRandomizer_randomizer);
-	config.width = width;
-	config.height = height;
-	config.full_height = full_height;
-	config.gravity = 1.0 / 60.0 * gravity;
-	config.next_piece_queue_size = next_piece_queue_size;
-	config.lock_delay = lock_delay;
-	board = malloc(sizeof(CitrusCell) * full_height * width);
-	next_piece_queue = malloc(sizeof(CitrusPiece*) * next_piece_queue_size);
+	board = malloc(sizeof(CitrusCell) * config.full_height * config.width);
+	next_piece_queue = malloc(sizeof(CitrusPiece*) * config.next_piece_queue_size);
 	CitrusGame_init(&game, board, next_piece_queue, config, &bag);
 }
 
@@ -130,26 +117,30 @@ int string_to_int(const char* s, int minimum) {
 
 int main(int argc, char** argv) {
 	program_name = argv[0];
+	CitrusGameConfig_init(&config, CitrusBagRandomizer_randomizer);
 	int c;
-	while ((c = getopt(argc, argv, "f:h:w:g:q:l:")) != -1) {
+	while ((c = getopt(argc, argv, "f:g:h:l:m:q:w:")) != -1) {
 		switch (c) {
 			case 'w':
-				width = string_to_int(optarg, 4);
+				config.width = string_to_int(optarg, 4);
 				break;
 			case 'h':
-				height = string_to_int(optarg, -1);
+				config.height = string_to_int(optarg, -1);
 				break;
 			case 'f':
-				full_height = string_to_int(optarg, 3);
+				config.full_height = string_to_int(optarg, 3);
 				break;
 			case 'g':
-				gravity = string_to_int(optarg, 0);
+				config.gravity = 1.0 / 60.0 * string_to_int(optarg, 0);
 				break;
 			case 'l':
-				lock_delay = string_to_int(optarg, 1);
+				config.lock_delay = string_to_int(optarg, 1);
+				break;
+			case 'm':
+				config.max_move_reset = string_to_int(optarg, 0);
 				break;
 			case 'q':
-				next_piece_queue_size = string_to_int(optarg, 0);
+				config.next_piece_queue_size = string_to_int(optarg, 0);
 				break;
 			case '?':
 				exit(-1);
@@ -157,19 +148,19 @@ int main(int argc, char** argv) {
 				break;
 		}
 	}
-	if (full_height == 0) {
-		int extra_height = height;
+	if (config.full_height == 40) {
+		int extra_height = config.height;
 		if (extra_height < 4)
 			extra_height = 4;
 		if (extra_height > 20)
 			extra_height = 20;
-		full_height = height + extra_height;
+		config.full_height = config.height + extra_height;
 	}
 	init_citrus();
 	init_ncurses();
 	WINDOW* hold_win = newwin(6, 10, 4, 2);
-	WINDOW* board_win = newwin(full_height + 2, width * 2 + 2, 4, 12);
-	WINDOW* next_piece_win = newwin(2 + 4 * next_piece_queue_size, 10, 4, width * 2 + 14);
+	WINDOW* board_win = newwin(config.full_height + 2, config.width * 2 + 2, 4, 12);
+	WINDOW* next_piece_win = newwin(2 + 4 * config.next_piece_queue_size, 10, 4, config.width * 2 + 14);
 	update(board_win, hold_win, next_piece_win);
 	double time_since_tick = 0;
 	struct timespec curr_time, prev_time;
