@@ -186,7 +186,6 @@ int main(int argc, char** argv) {
 				case 'z': key = CITRUS_KEY_ANTICLOCKWISE; break;
 				case 'x': case KEY_UP: key = CITRUS_KEY_CLOCKWISE; break;
 				case 'c': key = CITRUS_KEY_HOLD; break;
-				case 'a': key = CITRUS_KEY_180; break;
 			}
 			CitrusGame_key_down(&game, key);
 		}
