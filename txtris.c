@@ -26,12 +26,20 @@
 #include <unistd.h>
 #include "citrus.h"
 
+typedef struct {
+	int x;
+	int y;
+	int width;
+	int height;
+} Rect;
+
 const char* program_name;
 const CitrusPiece** next_piece_queue;
 CitrusGameConfig config;
 CitrusCell* board;
 CitrusGame game;
 CitrusBagRandomizer bag;
+Rect board_rect, next_rect, hold_rect;
 
 void update_window(WINDOW* win, const CitrusCell* data, int height, int width, int y_offset, int x_offset) {
 	for (int y = 0; y < height; y++) {
@@ -72,6 +80,8 @@ void update(WINDOW* board_win, WINDOW* hold_win, WINDOW* next_piece_win) {
 		int width = piece->width;
 		update_window(next_piece_win, data, height, width, (height >= 4 ? 0 : 1) + i * 4, 4 - height);
 	}
+	mvprintw(hold_rect.y + hold_rect.height + 1, hold_rect.x, "Score: %i", game.score);
+	wnoutrefresh(stdscr);
 	doupdate();
 }
 
@@ -158,9 +168,21 @@ int main(int argc, char** argv) {
 	}
 	init_citrus();
 	init_ncurses();
-	WINDOW* hold_win = newwin(6, 10, 4, 2);
-	WINDOW* board_win = newwin(config.full_height + 2, config.width * 2 + 2, 4, 12);
-	WINDOW* next_piece_win = newwin(2 + 4 * config.next_piece_queue_size, 10, 4, config.width * 2 + 14);
+	hold_rect.x = 2;
+	hold_rect.y = 4;
+	hold_rect.width = 10;
+	hold_rect.height = 6;
+	board_rect.x = hold_rect.x + hold_rect.width + 2;
+	board_rect.y = hold_rect.y;
+	board_rect.width = config.width * 2 + 2;
+	board_rect.height = config.full_height + 2;
+	next_rect.x = board_rect.x + board_rect.width;
+	next_rect.y = board_rect.y;
+	next_rect.width = 10;
+	next_rect.height = config.next_piece_queue_size * 4 + 2;
+	WINDOW* hold_win = newwin(hold_rect.height, hold_rect.width, hold_rect.y, hold_rect.x);
+	WINDOW* board_win = newwin(board_rect.height, board_rect.width, board_rect.y, board_rect.x);
+	WINDOW* next_piece_win = newwin(next_rect.height, next_rect.width, next_rect.y, next_rect.x);
 	update(board_win, hold_win, next_piece_win);
 	double time_since_tick = 0;
 	struct timespec curr_time, prev_time;
