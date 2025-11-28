@@ -127,7 +127,7 @@ int string_to_int(const char* s, int minimum) {
 
 int main(int argc, char** argv) {
 	program_name = argv[0];
-	CitrusGameConfig_init(&config, CitrusBagRandomizer_randomizer);
+	config = citrus_preset_modern;
 	int c;
 	while ((c = getopt(argc, argv, "f:g:h:l:m:q:w:")) != -1) {
 		switch (c) {
