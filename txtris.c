@@ -129,7 +129,7 @@ int main(int argc, char** argv) {
 	program_name = argv[0];
 	config = citrus_preset_modern;
 	int c;
-	while ((c = getopt(argc, argv, "cDd:f:g:h:l:m:q:w:")) != -1) {
+	while ((c = getopt(argc, argv, "cDd:f:g:h:l:m:q:s:w:")) != -1) {
 		switch (c) {
 			case 'w':
 				config.width = string_to_int(optarg, 4);
@@ -154,6 +154,9 @@ int main(int argc, char** argv) {
 				break;
 			case 'd':
 				config.line_clear_delay = string_to_int(optarg, 0);
+				break;
+			case 's':
+				config.shadow = string_to_int(optarg, 0);
 				break;
 			case 'c':
 				config = citrus_preset_classic;
