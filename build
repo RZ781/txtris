@@ -25,4 +25,6 @@ if [ -z "$LIBCITRUS_PATH" ] ; then
 	cd .. || exit $?
 fi
 
-gcc -Wall -Wextra -Wpedantic -I"$LIBCITRUS_PATH"/include txtris.c -L"$LIBCITRUS_PATH" -lncurses -o txtris -Wl,-Bstatic -lcitrus -Wl,-Bdynamic || exit $?
+gcc -Wall -Wextra -Wpedantic -o txtris \
+	-I"$LIBCITRUS_PATH"/include txtris.c -L"$LIBCITRUS_PATH"  -Wl,-Bstatic -lcitrus -Wl,-Bdynamic \
+	$(pkg-config --cflags --libs ncursesw) || exit $?
