@@ -41,6 +41,17 @@ CitrusGame game;
 CitrusBagRandomizer bag;
 Rect board_rect, next_rect, hold_rect;
 
+// color, rgb, default ncurses color, 8-bit color code
+int colors[7][6] = {
+	{CITRUS_COLOR_I, 89, 154, 209, COLOR_CYAN, 45},
+	{CITRUS_COLOR_J, 55, 67, 190, COLOR_BLUE, 21},
+	{CITRUS_COLOR_L, 202, 99, 41, COLOR_YELLOW, 166},
+	{CITRUS_COLOR_O, 253, 255, 12, COLOR_YELLOW, 226},
+	{CITRUS_COLOR_S, 117, 174, 54, COLOR_GREEN, 118},
+	{CITRUS_COLOR_T, 155, 55, 134, COLOR_MAGENTA, 129},
+	{CITRUS_COLOR_Z, 188, 46, 61, COLOR_RED, 160},
+};
+
 void update_window(WINDOW* win, const CitrusCell* data, int height, int width, int y_offset, int x_offset) {
 	for (int y = 0; y < height; y++) {
 		for (int x = 0; x < width; x++) {
@@ -101,13 +112,22 @@ void init_ncurses(void) {
 	keypad(stdscr, TRUE);
 	start_color();
 	init_pair(1, -1, COLOR_WHITE);
-	init_pair(CITRUS_COLOR_O + 2, -1, COLOR_YELLOW);
-	init_pair(CITRUS_COLOR_T + 2, -1, COLOR_MAGENTA);
-	init_pair(CITRUS_COLOR_S + 2, -1, COLOR_GREEN);
-	init_pair(CITRUS_COLOR_Z + 2, -1, COLOR_RED);
-	init_pair(CITRUS_COLOR_L + 2, -1, COLOR_YELLOW);
-	init_pair(CITRUS_COLOR_J + 2, -1, COLOR_BLUE);
-	init_pair(CITRUS_COLOR_I + 2, -1, COLOR_CYAN);
+	for (int i=0; i<7; i++) {
+		int color = colors[i][0];
+		int r = colors[i][1] * 1000 / 256;
+		int g = colors[i][2] * 1000 / 256;
+		int b = colors[i][3] * 1000 / 256;
+		int color_4bit = colors[i][4];
+		int color_8bit = colors[i][5];
+		if (can_change_color() && COLORS >= 16+7) {
+			init_color(i+16, r, g, b);
+			init_pair(color + 2, -1, i+16);
+		} else if (COLORS >= 256) {
+			init_pair(color + 2, -1, color_8bit);
+		} else {
+			init_pair(color + 2, -1, color_4bit);
+		}
+	}
 	curs_set(0);
 }
 
