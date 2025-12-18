@@ -38,7 +38,7 @@ const CitrusPiece** next_piece_queue;
 CitrusGameConfig config;
 CitrusCell* board;
 CitrusGame game;
-CitrusBagRandomizer bag;
+void* randomizer;
 Rect board_rect, next_rect, hold_rect;
 
 // color, rgb, default ncurses color, 8-bit color code
@@ -98,10 +98,16 @@ void update(WINDOW* board_win, WINDOW* hold_win, WINDOW* next_piece_win) {
 
 void init_citrus() {
 	srand(time(NULL));
-	CitrusBagRandomizer_init(&bag, rand());
+	if (config.randomizer == CitrusBagRandomizer_randomizer) {
+		randomizer = malloc(sizeof(CitrusBagRandomizer));
+		CitrusBagRandomizer_init(randomizer, rand());
+	} else {
+		randomizer = malloc(sizeof(CitrusClassicRandomizer));
+		CitrusClassicRandomizer_init(randomizer, rand());
+	}
 	board = malloc(sizeof(CitrusCell) * config.full_height * config.width);
 	next_piece_queue = malloc(sizeof(CitrusPiece*) * config.next_piece_queue_size);
-	CitrusGame_init(&game, board, next_piece_queue, config, &bag);
+	CitrusGame_init(&game, board, next_piece_queue, config, randomizer);
 }
 
 void init_ncurses(void) {
@@ -261,5 +267,6 @@ int main(int argc, char** argv) {
 	endwin();
 	free(board);
 	free(next_piece_queue);
+	free(randomizer);
 	return 0;
 }
