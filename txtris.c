@@ -42,7 +42,7 @@ void* randomizer;
 Rect board_rect, next_rect, hold_rect;
 
 // color, rgb, default ncurses color, 8-bit color code
-int colors[7][6] = {
+const int colors[7][6] = {
 	{CITRUS_COLOR_I, 89, 154, 209, COLOR_CYAN, 45},
 	{CITRUS_COLOR_J, 55, 67, 190, COLOR_BLUE, 21},
 	{CITRUS_COLOR_L, 202, 99, 41, COLOR_YELLOW, 166},
@@ -51,6 +51,8 @@ int colors[7][6] = {
 	{CITRUS_COLOR_T, 155, 55, 134, COLOR_MAGENTA, 129},
 	{CITRUS_COLOR_Z, 188, 46, 61, COLOR_RED, 160},
 };
+
+const char* clear_names[5] = {"", "Single", "Double", "Triple", "Quad"};
 
 void update_window(WINDOW* win, const CitrusCell* data, int height, int width, int y_offset, int x_offset) {
 	for (int y = 0; y < height; y++) {
@@ -69,6 +71,15 @@ void update_window(WINDOW* win, const CitrusCell* data, int height, int width, i
 	}
 	box(win, 0, 0);
 	wnoutrefresh(win);
+}
+
+void print_action_text(const char* fmt, ...) {
+	move(2, 2);
+	clrtoeol();
+	va_list args;
+	va_start(args, fmt);
+	vw_printw(stdscr, fmt, args);
+	va_end(args);
 }
 
 void update(WINDOW* board_win, WINDOW* hold_win, WINDOW* next_piece_win) {
@@ -96,8 +107,22 @@ void update(WINDOW* board_win, WINDOW* hold_win, WINDOW* next_piece_win) {
 	doupdate();
 }
 
+void action_text_callback(void* data, int n_lines_cleared, int combo, bool b2b, bool all_clear) {
+	(void) data;
+	if (n_lines_cleared == 0) {
+		return;
+	}
+	const char* name = clear_names[n_lines_cleared];
+	char combo_text[512] = "";
+	if (combo > 0) {
+		snprintf(combo_text, 512, " Combo %i", combo);
+	}
+	print_action_text("%s%s%s%s", all_clear ? "All Clear " : "", b2b ? "B2B " : "", name, combo_text);
+}
+
 void init_citrus() {
 	srand(time(NULL));
+	config.action_text = action_text_callback;
 	if (config.randomizer == CitrusBagRandomizer_randomizer) {
 		randomizer = malloc(sizeof(CitrusBagRandomizer));
 		CitrusBagRandomizer_init(randomizer, rand());
@@ -107,7 +132,7 @@ void init_citrus() {
 	}
 	board = malloc(sizeof(CitrusCell) * config.full_height * config.width);
 	next_piece_queue = malloc(sizeof(CitrusPiece*) * config.next_piece_queue_size);
-	CitrusGame_init(&game, board, next_piece_queue, config, randomizer);
+	CitrusGame_init(&game, board, next_piece_queue, config, randomizer, NULL);
 }
 
 void init_ncurses(void) {
@@ -261,7 +286,7 @@ int main(int argc, char** argv) {
 		}
 		update(board_win, hold_win, next_piece_win);
 	}
-	mvprintw(2, 2, "You died");
+	print_action_text("You died");
 	refresh();
 	sleep(5);
 	endwin();
