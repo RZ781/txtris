@@ -21,6 +21,7 @@
 #include <ncurses.h>
 #include <poll.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
@@ -74,12 +75,15 @@ void update_window(WINDOW* win, const CitrusCell* data, int height, int width, i
 }
 
 void print_action_text(const char* fmt, ...) {
-	move(2, 2);
-	clrtoeol();
+	char buffer[512];
 	va_list args;
 	va_start(args, fmt);
-	vw_printw(stdscr, fmt, args);
+	vsnprintf(buffer, sizeof(buffer), fmt, args);
 	va_end(args);
+	move(2, 0);
+	clrtoeol();
+	int x = board_rect.x + (board_rect.width - strlen(buffer)) / 2;
+	mvaddstr(2, x, buffer);
 }
 
 void update(WINDOW* board_win, WINDOW* hold_win, WINDOW* next_piece_win) {
