@@ -41,6 +41,7 @@ CitrusCell* board;
 CitrusGame game;
 void* randomizer;
 Rect board_rect, next_rect, hold_rect;
+bool one_key_finesse = false;
 
 // color, rgb, default ncurses color, 8-bit color code
 const int colors[7][6] = {
@@ -54,6 +55,13 @@ const int colors[7][6] = {
 };
 
 const char* clear_names[5] = {"", "Single", "Double", "Triple", "Quad"};
+
+const char* rows[4] = {
+	"asdfghjkl;",
+	"zxcvbnm,./",
+	"1234567890",
+	"qwertyuiop",
+};
 
 void update_window(WINDOW* win, const CitrusCell* data, int height, int width, int y_offset, int x_offset) {
 	for (int y = 0; y < height; y++) {
@@ -184,7 +192,7 @@ int main(int argc, char** argv) {
 	program_name = argv[0];
 	config = citrus_preset_modern;
 	int c;
-	while ((c = getopt(argc, argv, "cDd:f:g:h:l:m:q:s:w:")) != -1) {
+	while ((c = getopt(argc, argv, "1cDd:f:g:h:l:m:q:s:w:")) != -1) {
 		switch (c) {
 			case 'w':
 				config.width = string_to_int(optarg, 4);
@@ -218,6 +226,9 @@ int main(int argc, char** argv) {
 				break;
 			case 'D':
 				config = citrus_preset_delayless;
+				break;
+			case '1':
+				one_key_finesse = true;
 				break;
 			case '?':
 				exit(-1);
@@ -266,18 +277,53 @@ int main(int argc, char** argv) {
 		}
 		if (fd.revents & POLLIN) {
 			int c = getch();
-			int key = -1;
-			switch (c) {
-				case KEY_LEFT: key = CITRUS_KEY_LEFT; break;
-				case KEY_RIGHT: key = CITRUS_KEY_RIGHT; break;
-				case KEY_DOWN: key = CITRUS_KEY_SOFT_DROP; break;
-				case ' ': key = CITRUS_KEY_HARD_DROP; break;
-				case 'z': key = CITRUS_KEY_ANTICLOCKWISE; break;
-				case 'x': case KEY_UP: key = CITRUS_KEY_CLOCKWISE; break;
-				case 'c': key = CITRUS_KEY_HOLD; break;
-				case 'a': key = CITRUS_KEY_180; break;
+			if (one_key_finesse) {
+				int rotation, column;
+				for (rotation = 0; rotation < 4; rotation++) {
+					for (column = 0; column < 10; column++) {
+						if (rows[rotation][column] == c) {
+							goto found;
+						}
+					}
+				}
+				found:
+				if (rotation != 4) {
+					for (int i = 0; i < rotation; i++) {
+						CitrusGame_key_down(&game, CITRUS_KEY_CLOCKWISE);
+					}
+					if (column < 5) {
+						for (int i = 0; i < 10; i++) {
+							CitrusGame_key_down(&game, CITRUS_KEY_LEFT);
+						}
+						for (int i = 0; i < column; i++) {
+							CitrusGame_key_down(&game, CITRUS_KEY_RIGHT);
+						}
+					} else {
+						for (int i = 0; i < 10; i++) {
+							CitrusGame_key_down(&game, CITRUS_KEY_RIGHT);
+						}
+						for (int i = 0; i < 9 - column; i++) {
+							CitrusGame_key_down(&game, CITRUS_KEY_LEFT);
+						}
+					}
+					CitrusGame_key_down(&game, CITRUS_KEY_HARD_DROP);
+				} else if (c == ' ') {
+					CitrusGame_key_down(&game, CITRUS_KEY_HOLD);
+				}
+			} else {
+				int key = -1;
+				switch (c) {
+					case KEY_LEFT: key = CITRUS_KEY_LEFT; break;
+					case KEY_RIGHT: key = CITRUS_KEY_RIGHT; break;
+					case KEY_DOWN: key = CITRUS_KEY_SOFT_DROP; break;
+					case ' ': key = CITRUS_KEY_HARD_DROP; break;
+					case 'z': key = CITRUS_KEY_ANTICLOCKWISE; break;
+					case 'x': case KEY_UP: key = CITRUS_KEY_CLOCKWISE; break;
+					case 'c': key = CITRUS_KEY_HOLD; break;
+					case 'a': key = CITRUS_KEY_180; break;
+				}
+				CitrusGame_key_down(&game, key);
 			}
-			CitrusGame_key_down(&game, key);
 		}
 		prev_time = curr_time;
 		clock_gettime(CLOCK_MONOTONIC, &curr_time);
