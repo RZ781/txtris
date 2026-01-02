@@ -119,7 +119,7 @@ void update(WINDOW* board_win, WINDOW* hold_win, WINDOW* next_piece_win) {
 	doupdate();
 }
 
-void action_text_callback(void* data, int n_lines_cleared, int combo, bool b2b, bool all_clear) {
+void action_text_callback(void* data, int n_lines_cleared, int combo, bool b2b, bool all_clear, bool spin, bool mini_spin) {
 	(void) data;
 	if (n_lines_cleared == 0) {
 		return;
@@ -127,9 +127,9 @@ void action_text_callback(void* data, int n_lines_cleared, int combo, bool b2b, 
 	const char* name = clear_names[n_lines_cleared];
 	char combo_text[512] = "";
 	if (combo > 0) {
-		snprintf(combo_text, 512, " Combo %i", combo);
+		snprintf(combo_text, sizeof(combo_text), " Combo %i", combo);
 	}
-	print_action_text("%s%s%s%s", all_clear ? "All Clear " : "", b2b ? "B2B " : "", name, combo_text);
+	print_action_text("%s%s%s%s%s", all_clear ? "All Clear " : "", b2b ? "B2B " : "", spin ? "T Spin " : mini_spin ? "Mini T Spin " : "", name, combo_text);
 }
 
 void init_citrus() {
