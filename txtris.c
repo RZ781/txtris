@@ -121,7 +121,7 @@ void update(WINDOW* board_win, WINDOW* hold_win, WINDOW* next_piece_win) {
 
 void action_text_callback(void* data, int n_lines_cleared, int combo, bool b2b, bool all_clear, bool spin, bool mini_spin) {
 	(void) data;
-	if (n_lines_cleared == 0) {
+	if (n_lines_cleared == 0 && !spin && !mini_spin) {
 		return;
 	}
 	const char* name = clear_names[n_lines_cleared];
