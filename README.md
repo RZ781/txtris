@@ -3,8 +3,11 @@
 [libcitrus](https://github.com/RZ781/libcitrus).
 
 To build, first initialise the libcitrus submodule with `git submodule
-update --init`.  Then, install ncurses and with your distro's package
-manager and run `./build`.
+update --init`.  Then, install ncurses development files with your
+distro's package manager and run `make`.
+
+After pulling, remember to run `git submodule update` to update the
+libcitrus submodule.
 
 txtris is free software, distributed under the terms of the GNU General
 Public License as published by the Free Software Foundation, either

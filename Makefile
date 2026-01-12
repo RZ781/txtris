@@ -1,5 +1,3 @@
-#!/bin/sh
-
 # Copyright (C) 2025 RZ781
 #
 # This file is part of txtris.
@@ -18,13 +16,16 @@
 # along with this program.  If not, see
 # <https://www.gnu.org/licenses/>.
 
-if [ -z "$LIBCITRUS_PATH" ] ; then
-	LIBCITRUS_PATH=libcitrus
-	cd libcitrus || exit $?
-	./build || exit $?
-	cd .. || exit $?
-fi
+LIBCITRUS_PATH ?= libcitrus
+CFLAGS = -Wall -Wextra -Wpedantic -I$(LIBCITRUS_PATH)/include $$(pkg-config --cflags ncursesw)
 
-gcc -Wall -Wextra -Wpedantic -o txtris \
-	-I"$LIBCITRUS_PATH"/include txtris.c -L"$LIBCITRUS_PATH"  -Wl,-Bstatic -lcitrus -Wl,-Bdynamic \
-	$(pkg-config --cflags --libs ncursesw) || exit $?
+.PHONY: libcitrus
+
+txtris: txtris.o libcitrus $(LIBCITRUS_PATH)/libcitrus.a
+	gcc -o txtris txtris.o -L"$(LIBCITRUS_PATH)" -Wl,-Bstatic -lcitrus -Wl,-Bdynamic $$(pkg-config --libs ncursesw)
+
+libcitrus:
+	make -C libcitrus
+
+%.o: %.c
+	gcc $(CFLAGS) -c $< -o $@
