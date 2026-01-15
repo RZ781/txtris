@@ -1,4 +1,4 @@
-/* Copyright (C) 2025 RZ781
+/* Copyright (C) 2025-2026 RZ781
  *
  * This file is part of txtris.
  *
@@ -115,6 +115,8 @@ void update(WINDOW* board_win, WINDOW* hold_win, WINDOW* next_piece_win) {
 		update_window(next_piece_win, data, height, width, (height >= 4 ? 0 : 1) + i * 4, 4 - height);
 	}
 	mvprintw(hold_rect.y + hold_rect.height + 1, hold_rect.x, "Score: %i", game.score);
+	mvprintw(hold_rect.y + hold_rect.height + 2, hold_rect.x, "Level: %i", game.level);
+	mvprintw(hold_rect.y + hold_rect.height + 3, hold_rect.x, "Lines: %i", game.lines);
 	wnoutrefresh(stdscr);
 	doupdate();
 }

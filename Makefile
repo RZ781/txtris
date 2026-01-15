@@ -1,4 +1,4 @@
-# Copyright (C) 2025 RZ781
+# Copyright (C) 2026 RZ781
 #
 # This file is part of txtris.
 #
