@@ -17,7 +17,7 @@
 # <https://www.gnu.org/licenses/>.
 
 LIBCITRUS_PATH ?= libcitrus
-CFLAGS = -Wall -Wextra -Wpedantic -I$(LIBCITRUS_PATH)/include $$(pkg-config --cflags ncursesw)
+CFLAGS = -Wall -Wextra -Wpedantic -I$(LIBCITRUS_PATH)/include $$(pkg-config --cflags ncursesw) -DNCURSES_BACKEND
 
 .PHONY: libcitrus
 

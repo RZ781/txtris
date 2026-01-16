@@ -17,14 +17,25 @@
  * <https://www.gnu.org/licenses/>.
  */
 
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
+
+#define K_LEFT	(-1)
+#define K_RIGHT	(-2)
+#define K_UP	(-3)
+#define K_DOWN	(-4)
+
+#ifdef NCURSES_BACKEND
 #include <errno.h>
 #include <ncurses.h>
 #include <poll.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/types.h>
-#include <time.h>
-#include <unistd.h>
+#endif
+
 #include "citrus.h"
 
 typedef struct {
@@ -32,19 +43,29 @@ typedef struct {
 	int y;
 	int width;
 	int height;
-} Rect;
+	void* backend_data;
+} Window;
 
-const char* program_name;
-const CitrusPiece** next_piece_queue;
-CitrusGameConfig config;
-CitrusCell* board;
-CitrusGame game;
-void* randomizer;
-Rect board_rect, next_rect, hold_rect;
-bool one_key_finesse = false;
+typedef struct Backend {
+	void (*init)(void);
+	void (*exit)(void);
+	int (*get_key)(int);
+	void (*init_window)(Window*);
+	void (*full_update)(void);
+	void (*update)(Window);
+	void (*print)(int, int, const char*, ...);
+	void (*erase_window)(Window);
+	void (*erase_line)(int, int);
+	void (*draw_cell)(Window, int, int, int);
+	void (*draw_box)(Window);
+} Backend;
+
+Backend backend;
+
+#ifdef NCURSES_BACKEND
 
 // color, rgb, default ncurses color, 8-bit color code
-const int colors[7][6] = {
+const int ncurses_colors[7][6] = {
 	{CITRUS_COLOR_I, 89, 154, 209, COLOR_CYAN, 45},
 	{CITRUS_COLOR_J, 55, 67, 190, COLOR_BLUE, 21},
 	{CITRUS_COLOR_L, 202, 99, 41, COLOR_YELLOW, 166},
@@ -52,6 +73,132 @@ const int colors[7][6] = {
 	{CITRUS_COLOR_S, 117, 174, 54, COLOR_GREEN, 118},
 	{CITRUS_COLOR_T, 155, 55, 134, COLOR_MAGENTA, 129},
 	{CITRUS_COLOR_Z, 188, 46, 61, COLOR_RED, 160},
+};
+
+void ncurses_init(void) {
+	initscr();
+	cbreak();
+	noecho();
+	use_default_colors();
+	keypad(stdscr, TRUE);
+	start_color();
+	init_pair(1, -1, COLOR_WHITE);
+	for (int i=0; i < 7; i++) {
+		int color = ncurses_colors[i][0];
+		int r = ncurses_colors[i][1] * 1000 / 256;
+		int g = ncurses_colors[i][2] * 1000 / 256;
+		int b = ncurses_colors[i][3] * 1000 / 256;
+		int color_4bit = ncurses_colors[i][4];
+		int color_8bit = ncurses_colors[i][5];
+		if (can_change_color() && COLORS >= 16+7) {
+			init_color(i+16, r, g, b);
+			init_pair(color + 2, -1, i+16);
+		} else if (COLORS >= 256) {
+			init_pair(color + 2, -1, color_8bit);
+		} else {
+			init_pair(color + 2, -1, color_4bit);
+		}
+	}
+	curs_set(0);
+}
+
+void ncurses_exit(void) {
+	endwin();
+}
+
+int ncurses_get_key(int timeout) {
+	struct pollfd fd = {STDIN_FILENO, POLLIN, 0};
+	if (poll(&fd, 1, timeout) == -1 && errno != EINTR) {
+		perror("poll");
+		exit(-1);
+	}
+	if (fd.revents & POLLIN) {
+		int ch = getch();
+		switch (ch) {
+			case KEY_LEFT: return K_LEFT;
+			case KEY_RIGHT: return K_RIGHT;
+			case KEY_UP: return K_UP;
+			case KEY_DOWN: return K_DOWN;
+			default: return ch;
+		}
+	}
+	return 0;
+}
+
+void ncurses_init_window(Window* window) {
+	 window->backend_data = newwin(window->height, window->width, window->y, window->x);
+}
+
+void ncurses_full_update(void) {
+	wnoutrefresh(stdscr);
+	doupdate();
+}
+
+void ncurses_print(int y, int x, const char* format, ...) {
+	va_list args;
+	move(y, x);
+	va_start(args, format);
+	vw_printw(stdscr, format, args);
+	va_end(args);
+}
+
+void ncurses_update(Window window) {
+	wnoutrefresh(window.backend_data);
+}
+
+void ncurses_erase_window(Window window) {
+	werase(window.backend_data);
+}
+
+void ncurses_erase_line(int x, int y) {
+	move(y, x);
+ 	clrtoeol();
+}
+
+void ncurses_draw_cell(Window window, int x, int y, int color) {
+	int ch = ' ' | COLOR_PAIR(color);
+	mvwaddch(window.backend_data, y + 1, x + 1, ch);
+	mvwaddch(window.backend_data, y + 1, x + 2, ch);
+}
+
+void ncurses_draw_box(Window window) {
+	box(window.backend_data, 0, 0);
+}
+
+Backend ncurses_backend = {
+	.init = ncurses_init,
+	.exit = ncurses_exit,
+	.get_key = ncurses_get_key,
+	.init_window = ncurses_init_window,
+	.full_update = ncurses_full_update,
+	.update = ncurses_update,
+	.print = ncurses_print,
+	.erase_window = ncurses_erase_window,
+	.erase_line = ncurses_erase_line,
+	.draw_cell = ncurses_draw_cell,
+	.draw_box = ncurses_draw_box
+};
+
+#endif
+
+const char* program_name;
+const CitrusPiece** next_piece_queue;
+CitrusGameConfig config;
+CitrusCell* board;
+CitrusGame game;
+void* randomizer;
+Window board_win, next_piece_win, hold_win;
+bool one_key_finesse = false;
+
+// color, rgb, default ncurses color, 8-bit color code
+const int colors[7][4] = {
+	{CITRUS_COLOR_I, 89, 154, 209},
+	{CITRUS_COLOR_J, 55, 67, 190},
+	{CITRUS_COLOR_L, 202, 99, 41},
+	{CITRUS_COLOR_O, 253, 255, 12},
+	{CITRUS_COLOR_S, 117, 174, 54},
+	{CITRUS_COLOR_T, 155, 55, 134},
+	{CITRUS_COLOR_Z, 188, 46, 61},
 };
 
 const char* clear_names[5] = {"", "Single", "Double", "Triple", "Quad"};
@@ -63,23 +210,22 @@ const char* rows[4] = {
 	"qwertyuiop",
 };
 
-void update_window(WINDOW* win, const CitrusCell* data, int height, int width, int y_offset, int x_offset) {
+void update_window(Window win, const CitrusCell* data, int height, int width, int y_offset, int x_offset) {
 	for (int y = 0; y < height; y++) {
 		for (int x = 0; x < width; x++) {
 			CitrusCell cell = data[y * width + x];
-			int ch;
+			int color;
 			if (cell.type == CITRUS_CELL_FULL)
-				ch = ' ' | COLOR_PAIR(cell.color + 2);
+				color = cell.color + 2;
 			else if (cell.type == CITRUS_CELL_SHADOW)
-				ch = ' ' | COLOR_PAIR(1);
+				color = 1;
 			else
-				ch = ' ' | COLOR_PAIR(0);
-			mvwaddch(win, height - y + y_offset, x * 2 + 1 + x_offset, ch);
-			mvwaddch(win, height - y + y_offset, x * 2 + 2 + x_offset, ch);
+				color = 0;
+			backend.draw_cell(win, x * 2 + x_offset, height - 1 - y + y_offset, color);
 		}
 	}
-	box(win, 0, 0);
-	wnoutrefresh(win);
+	backend.draw_box(win);
+	backend.update(win);
 }
 
 void print_action_text(const char* fmt, ...) {
@@ -88,16 +234,16 @@ void print_action_text(const char* fmt, ...) {
 	va_start(args, fmt);
 	vsnprintf(buffer, sizeof(buffer), fmt, args);
 	va_end(args);
-	move(2, 0);
-	clrtoeol();
-	int x = board_rect.x + (board_rect.width - strlen(buffer)) / 2;
-	mvaddstr(2, x, buffer);
+	backend.erase_line(0, 2);
+	int x = board_win.x + (board_win.width - strlen(buffer)) / 2;
+	backend.print(2, x, buffer);
+	backend.full_update();
 }
 
-void update(WINDOW* board_win, WINDOW* hold_win, WINDOW* next_piece_win) {
-	werase(board_win);
-	werase(hold_win);
-	werase(next_piece_win);
+void update(void) {
+	backend.erase_window(board_win);
+	backend.erase_window(hold_win);
+	backend.erase_window(next_piece_win);
 	update_window(board_win, board, config.full_height, config.width, 0, 0);
 	if (game.hold_piece == NULL) {
 		update_window(hold_win, NULL, 0, 0, 0, 0);
@@ -114,11 +260,10 @@ void update(WINDOW* board_win, WINDOW* hold_win, WINDOW* next_piece_win) {
 		int width = piece->width;
 		update_window(next_piece_win, data, height, width, (height >= 4 ? 0 : 1) + i * 4, 4 - height);
 	}
-	mvprintw(hold_rect.y + hold_rect.height + 1, hold_rect.x, "Score: %i", game.score);
-	mvprintw(hold_rect.y + hold_rect.height + 2, hold_rect.x, "Level: %i", game.level);
-	mvprintw(hold_rect.y + hold_rect.height + 3, hold_rect.x, "Lines: %i", game.lines);
-	wnoutrefresh(stdscr);
-	doupdate();
+	backend.print(hold_win.y + hold_win.height + 1, hold_win.x, "Score: %i", game.score);
+	backend.print(hold_win.y + hold_win.height + 2, hold_win.x, "Level: %i", game.level);
+	backend.print(hold_win.y + hold_win.height + 3, hold_win.x, "Lines: %i", game.lines);
+	backend.full_update();
 }
 
 void action_text_callback(void* data, int n_lines_cleared, int combo, bool b2b, bool all_clear, bool spin, bool mini_spin) {
@@ -149,33 +294,6 @@ void init_citrus() {
 	CitrusGame_init(&game, board, next_piece_queue, config, randomizer, NULL);
 }
 
-void init_ncurses(void) {
-	initscr();
-	cbreak();
-	noecho();
-	use_default_colors();
-	keypad(stdscr, TRUE);
-	start_color();
-	init_pair(1, -1, COLOR_WHITE);
-	for (int i=0; i<7; i++) {
-		int color = colors[i][0];
-		int r = colors[i][1] * 1000 / 256;
-		int g = colors[i][2] * 1000 / 256;
-		int b = colors[i][3] * 1000 / 256;
-		int color_4bit = colors[i][4];
-		int color_8bit = colors[i][5];
-		if (can_change_color() && COLORS >= 16+7) {
-			init_color(i+16, r, g, b);
-			init_pair(color + 2, -1, i+16);
-		} else if (COLORS >= 256) {
-			init_pair(color + 2, -1, color_8bit);
-		} else {
-			init_pair(color + 2, -1, color_4bit);
-		}
-	}
-	curs_set(0);
-}
-
 int string_to_int(const char* s, int minimum) {
 	char* endptr;
 	int i = strtol(optarg, &endptr, 10);
@@ -194,6 +312,11 @@ int main(int argc, char** argv) {
 	program_name = argv[0];
 	config = citrus_preset_modern;
 	int c;
+#ifdef NCURSES_BACKEND
+	backend = ncurses_backend;
+#else
+#error "no backend selected"
+#endif
 	while ((c = getopt(argc, argv, "1cDd:f:g:h:l:m:q:s:w:")) != -1) {
 		switch (c) {
 			case 'w':
@@ -247,38 +370,33 @@ int main(int argc, char** argv) {
 		config.full_height = config.height + extra_height;
 	}
 	init_citrus();
-	init_ncurses();
-	hold_rect.x = 2;
-	hold_rect.y = 4;
-	hold_rect.width = 10;
-	hold_rect.height = 6;
-	board_rect.x = hold_rect.x + hold_rect.width + 2;
-	board_rect.y = hold_rect.y;
-	board_rect.width = config.width * 2 + 2;
-	board_rect.height = config.full_height + 2;
-	next_rect.x = board_rect.x + board_rect.width;
-	next_rect.y = board_rect.y;
-	next_rect.width = 10;
-	next_rect.height = config.next_piece_queue_size * 4 + 2;
-	WINDOW* hold_win = newwin(hold_rect.height, hold_rect.width, hold_rect.y, hold_rect.x);
-	WINDOW* board_win = newwin(board_rect.height, board_rect.width, board_rect.y, board_rect.x);
-	WINDOW* next_piece_win = newwin(next_rect.height, next_rect.width, next_rect.y, next_rect.x);
-	update(board_win, hold_win, next_piece_win);
+	backend.init();
+	hold_win.x = 2;
+	hold_win.y = 4;
+	hold_win.width = 10;
+	hold_win.height = 6;
+	board_win.x = hold_win.x + hold_win.width + 2;
+	board_win.y = hold_win.y;
+	board_win.width = config.width * 2 + 2;
+	board_win.height = config.full_height + 2;
+	next_piece_win.x = board_win.x + board_win.width;
+	next_piece_win.y = board_win.y;
+	next_piece_win.width = 10;
+	next_piece_win.height = config.next_piece_queue_size * 4 + 2;
+	backend.init_window(&hold_win);
+	backend.init_window(&board_win);
+	backend.init_window(&next_piece_win);
+	update();
 	double time_since_tick = 0;
 	struct timespec curr_time, prev_time;
 	clock_gettime(CLOCK_MONOTONIC, &curr_time);
 	int ticks = 0;
 	while (CitrusGame_is_alive(&game)) {
-		struct pollfd fd = {STDIN_FILENO, POLLIN, 0};
 		int ms_timeout = (1.0 / 60.0 - time_since_tick) * 1e3;
 		if (ms_timeout < 0)
 			ms_timeout = 0;
-		if (poll(&fd, 1, ms_timeout) == -1 && errno != EINTR) {
-			perror("poll");
-			exit(-1);
-		}
-		if (fd.revents & POLLIN) {
-			int c = getch();
+		int c = backend.get_key(ms_timeout);
+		if (c != 0) {
 			if (one_key_finesse) {
 				int rotation, column;
 				for (rotation = 0; rotation < 4; rotation++) {
@@ -315,12 +433,12 @@ int main(int argc, char** argv) {
 			} else {
 				int key = -1;
 				switch (c) {
-					case KEY_LEFT: key = CITRUS_KEY_LEFT; break;
-					case KEY_RIGHT: key = CITRUS_KEY_RIGHT; break;
-					case KEY_DOWN: key = CITRUS_KEY_SOFT_DROP; break;
+					case K_LEFT: key = CITRUS_KEY_LEFT; break;
+					case K_RIGHT: key = CITRUS_KEY_RIGHT; break;
+					case K_DOWN: key = CITRUS_KEY_SOFT_DROP; break;
 					case ' ': key = CITRUS_KEY_HARD_DROP; break;
 					case 'z': key = CITRUS_KEY_ANTICLOCKWISE; break;
-					case 'x': case KEY_UP: key = CITRUS_KEY_CLOCKWISE; break;
+					case 'x': case K_UP: key = CITRUS_KEY_CLOCKWISE; break;
 					case 'c': key = CITRUS_KEY_HOLD; break;
 					case 'a': key = CITRUS_KEY_180; break;
 				}
@@ -336,12 +454,11 @@ int main(int argc, char** argv) {
 			CitrusGame_tick(&game);
 			ticks++;
 		}
-		update(board_win, hold_win, next_piece_win);
+		update();
 	}
 	print_action_text("You died");
-	refresh();
 	sleep(5);
-	endwin();
+	backend.exit();
 	free(board);
 	free(next_piece_queue);
 	free(randomizer);
