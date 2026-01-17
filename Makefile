@@ -17,12 +17,12 @@
 # <https://www.gnu.org/licenses/>.
 
 LIBCITRUS_PATH ?= libcitrus
-CFLAGS = -Wall -Wextra -Wpedantic -I$(LIBCITRUS_PATH)/include $$(pkg-config --cflags ncursesw) -DNCURSES_BACKEND
+CFLAGS = -Wall -Wextra -Wpedantic -I$(LIBCITRUS_PATH)/include $(shell pkg-config --cflags ncursesw) $(shell pkg-config --cflags raylib) -DNCURSES_BACKEND -DRAYLIB_BACKEND
 
 .PHONY: libcitrus
 
-txtris: txtris.o libcitrus $(LIBCITRUS_PATH)/libcitrus.a
-	gcc -o txtris txtris.o -L"$(LIBCITRUS_PATH)" -Wl,-Bstatic -lcitrus -Wl,-Bdynamic $$(pkg-config --libs ncursesw)
+txtris: txtris.o raylib.o libcitrus $(LIBCITRUS_PATH)/libcitrus.a
+	gcc -o txtris txtris.o raylib.o -L"$(LIBCITRUS_PATH)" -Wl,-Bstatic -lcitrus -Wl,-Bdynamic $$(pkg-config --libs ncursesw) $$(pkg-config --libs raylib)
 
 libcitrus:
 	make -C libcitrus

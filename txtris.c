@@ -23,11 +23,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-
-#define K_LEFT	(-1)
-#define K_RIGHT	(-2)
-#define K_UP	(-3)
-#define K_DOWN	(-4)
+#include "backend.h"
 
 #ifdef NCURSES_BACKEND
 #include <errno.h>
@@ -37,28 +33,6 @@
 #endif
 
 #include "citrus.h"
-
-typedef struct {
-	int x;
-	int y;
-	int width;
-	int height;
-	void* backend_data;
-} Window;
-
-typedef struct Backend {
-	void (*init)(void);
-	void (*exit)(void);
-	int (*get_key)(int);
-	void (*init_window)(Window*);
-	void (*full_update)(void);
-	void (*update)(Window);
-	void (*print)(int, int, const char*, ...);
-	void (*erase_window)(Window);
-	void (*erase_line)(int, int);
-	void (*draw_cell)(Window, int, int, int);
-	void (*draw_box)(Window);
-} Backend;
 
 Backend backend;
 
@@ -126,7 +100,7 @@ int ncurses_get_key(int timeout) {
 }
 
 void ncurses_init_window(Window* window) {
-	 window->backend_data = newwin(window->height, window->width, window->y, window->x);
+	 window->backend_data = newwin(window->height, window->width * 2, window->y, window->x * 2);
 }
 
 void ncurses_full_update(void) {
@@ -157,8 +131,8 @@ void ncurses_erase_line(int x, int y) {
 
 void ncurses_draw_cell(Window window, int x, int y, int color) {
 	int ch = ' ' | COLOR_PAIR(color);
-	mvwaddch(window.backend_data, y + 1, x + 1, ch);
-	mvwaddch(window.backend_data, y + 1, x + 2, ch);
+	mvwaddch(window.backend_data, y + 1, x * 2 + 1, ch);
+	mvwaddch(window.backend_data, y + 1, x * 2 + 2, ch);
 }
 
 void ncurses_draw_box(Window window) {
@@ -181,6 +155,10 @@ Backend ncurses_backend = {
 
 #endif
 
+#ifdef RAYLIB_BACKEND
+extern Backend raylib_backend;
+#endif
+
 const char* program_name;
 const CitrusPiece** next_piece_queue;
 CitrusGameConfig config;
@@ -189,6 +167,8 @@ CitrusGame game;
 void* randomizer;
 Window board_win, next_piece_win, hold_win;
 bool one_key_finesse = false;
+int pieces = 0;
+int ticks = 0;
 
 // color, rgb, default ncurses color, 8-bit color code
 const int colors[7][4] = {
@@ -221,7 +201,7 @@ void update_window(Window win, const CitrusCell* data, int height, int width, in
 				color = 1;
 			else
 				color = 0;
-			backend.draw_cell(win, x * 2 + x_offset, height - 1 - y + y_offset, color);
+			backend.draw_cell(win, x + x_offset, height - 1 - y + y_offset, color);
 		}
 	}
 	backend.draw_box(win);
@@ -235,7 +215,7 @@ void print_action_text(const char* fmt, ...) {
 	vsnprintf(buffer, sizeof(buffer), fmt, args);
 	va_end(args);
 	backend.erase_line(0, 2);
-	int x = board_win.x + (board_win.width - strlen(buffer)) / 2;
+	int x = board_win.x + (board_win.width - strlen(buffer)) / 4;
 	backend.print(2, x, buffer);
 	backend.full_update();
 }
@@ -267,6 +247,7 @@ void update(void) {
 }
 
 void action_text_callback(void* data, int n_lines_cleared, int combo, bool b2b, bool all_clear, bool spin, bool mini_spin) {
+	pieces++;
 	(void) data;
 	if (n_lines_cleared == 0 && !spin && !mini_spin) {
 		return;
@@ -314,10 +295,12 @@ int main(int argc, char** argv) {
 	int c;
 #ifdef NCURSES_BACKEND
 	backend = ncurses_backend;
+#elif defined RAYLIB_BACKEND
+	backend = raylib_backend;
 #else
 #error "no backend selected"
 #endif
-	while ((c = getopt(argc, argv, "1cDd:f:g:h:l:m:q:s:w:")) != -1) {
+	while ((c = getopt(argc, argv, "1cDrd:f:g:h:l:m:q:s:w:")) != -1) {
 		switch (c) {
 			case 'w':
 				config.width = string_to_int(optarg, 4);
@@ -355,6 +338,14 @@ int main(int argc, char** argv) {
 			case '1':
 				one_key_finesse = true;
 				break;
+			case 'r':
+#ifdef RAYLIB_BACKEND
+				backend = raylib_backend;
+				break;
+#else
+				fprintf(stderr, "%s: raylib not included\n", program_name);
+				exit(-1);
+#endif
 			case '?':
 				exit(-1);
 			default:
@@ -371,17 +362,17 @@ int main(int argc, char** argv) {
 	}
 	init_citrus();
 	backend.init();
-	hold_win.x = 2;
+	hold_win.x = 1;
 	hold_win.y = 4;
-	hold_win.width = 10;
+	hold_win.width = 5;
 	hold_win.height = 6;
-	board_win.x = hold_win.x + hold_win.width + 2;
+	board_win.x = hold_win.x + hold_win.width + 1;
 	board_win.y = hold_win.y;
-	board_win.width = config.width * 2 + 2;
+	board_win.width = config.width + 1;
 	board_win.height = config.full_height + 2;
 	next_piece_win.x = board_win.x + board_win.width;
 	next_piece_win.y = board_win.y;
-	next_piece_win.width = 10;
+	next_piece_win.width = 5;
 	next_piece_win.height = config.next_piece_queue_size * 4 + 2;
 	backend.init_window(&hold_win);
 	backend.init_window(&board_win);
@@ -390,7 +381,6 @@ int main(int argc, char** argv) {
 	double time_since_tick = 0;
 	struct timespec curr_time, prev_time;
 	clock_gettime(CLOCK_MONOTONIC, &curr_time);
-	int ticks = 0;
 	while (CitrusGame_is_alive(&game)) {
 		int ms_timeout = (1.0 / 60.0 - time_since_tick) * 1e3;
 		if (ms_timeout < 0)
