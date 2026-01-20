@@ -243,6 +243,7 @@ void update(void) {
 	backend.print(hold_win.y + hold_win.height + 1, hold_win.x, "Score: %i", game.score);
 	backend.print(hold_win.y + hold_win.height + 2, hold_win.x, "Level: %i", game.level);
 	backend.print(hold_win.y + hold_win.height + 3, hold_win.x, "Lines: %i", game.lines);
+	backend.print(hold_win.y + hold_win.height + 4, hold_win.x, "  PPS: %.2f", ((float)pieces)/((float)ticks/60.0));
 	backend.full_update();
 }
 
