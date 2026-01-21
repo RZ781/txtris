@@ -23,10 +23,11 @@
 #include "backend.h"
 #include "citrus.h"
 
-#define CELL_SIZE 10
+#define CELL_WIDTH 5
+#define CELL_HEIGHT 10
 
 void raylib_init(void) {
-	InitWindow(CELL_SIZE*30, CELL_SIZE*46, "txtris");
+	InitWindow(CELL_WIDTH * 60, CELL_HEIGHT * 46, "txtris");
 	SetTargetFPS(60);
 	BeginDrawing();
 }
@@ -60,11 +61,11 @@ void raylib_print(int y, int x, const char* fmt, ...) {
 	va_start(args, fmt);
 	vsnprintf(buffer, sizeof(buffer), fmt, args);
 	va_end(args);
-	DrawText(buffer, x*CELL_SIZE, y*CELL_SIZE, CELL_SIZE, WHITE);
+	DrawText(buffer, x * CELL_WIDTH, y * CELL_HEIGHT, CELL_HEIGHT, WHITE);
 }
 
 void raylib_erase_window(Window window) {
-	DrawRectangle(window.x * CELL_SIZE, window.y * CELL_SIZE, window.width * CELL_SIZE, window.height * CELL_SIZE, BLACK);
+	DrawRectangle(window.x * CELL_WIDTH, window.y * CELL_HEIGHT, window.width * CELL_WIDTH, window.height * CELL_HEIGHT, BLACK);
 }
 
 void raylib_erase_line(int x, int y) {
@@ -84,11 +85,11 @@ void raylib_draw_cell(Window window, int x, int y, int color) {
 		case 2 + CITRUS_COLOR_T: raylib_color = MAGENTA; break;
 		case 2 + CITRUS_COLOR_Z: raylib_color = RED; break;
 	}
-	DrawRectangle((window.x + x) * CELL_SIZE, (window.y + y) * CELL_SIZE, CELL_SIZE, CELL_SIZE, raylib_color);
+	DrawRectangle((window.x + x) * CELL_WIDTH, (window.y + y) * CELL_HEIGHT, CELL_WIDTH * 2, CELL_HEIGHT, raylib_color);
 }
 
 void raylib_draw_box(Window window) {
-	DrawRectangleLines(window.x * CELL_SIZE, window.y * CELL_SIZE, window.width * CELL_SIZE, window.height * CELL_SIZE, WHITE);
+	DrawRectangleLines(window.x * CELL_WIDTH, window.y * CELL_HEIGHT, window.width * CELL_WIDTH, window.height * CELL_HEIGHT, WHITE);
 }
 
 Backend raylib_backend = {

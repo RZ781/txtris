@@ -100,7 +100,7 @@ int ncurses_get_key(int timeout) {
 }
 
 void ncurses_init_window(Window* window) {
-	 window->backend_data = newwin(window->height, window->width * 2, window->y, window->x * 2);
+	 window->backend_data = newwin(window->height, window->width, window->y, window->x);
 }
 
 void ncurses_full_update(void) {
@@ -131,8 +131,8 @@ void ncurses_erase_line(int x, int y) {
 
 void ncurses_draw_cell(Window window, int x, int y, int color) {
 	int ch = ' ' | COLOR_PAIR(color);
-	mvwaddch(window.backend_data, y + 1, x * 2 + 1, ch);
-	mvwaddch(window.backend_data, y + 1, x * 2 + 2, ch);
+	mvwaddch(window.backend_data, y + 1, x + 1, ch);
+	mvwaddch(window.backend_data, y + 1, x + 2, ch);
 }
 
 void ncurses_draw_box(Window window) {
@@ -201,7 +201,7 @@ void update_window(Window win, const CitrusCell* data, int height, int width, in
 				color = 1;
 			else
 				color = 0;
-			backend.draw_cell(win, x + x_offset, height - 1 - y + y_offset, color);
+			backend.draw_cell(win, x * 2 + x_offset, height - 1 - y + y_offset, color);
 		}
 	}
 	backend.draw_box(win);
@@ -363,17 +363,17 @@ int main(int argc, char** argv) {
 	}
 	init_citrus();
 	backend.init();
-	hold_win.x = 1;
+	hold_win.x = 2;
 	hold_win.y = 4;
-	hold_win.width = 5;
+	hold_win.width = 10;
 	hold_win.height = 6;
-	board_win.x = hold_win.x + hold_win.width + 1;
+	board_win.x = hold_win.x + hold_win.width + 2;
 	board_win.y = hold_win.y;
-	board_win.width = config.width + 1;
+	board_win.width = config.width * 2 + 2;
 	board_win.height = config.full_height + 2;
 	next_piece_win.x = board_win.x + board_win.width;
 	next_piece_win.y = board_win.y;
-	next_piece_win.width = 5;
+	next_piece_win.width = 10;
 	next_piece_win.height = config.next_piece_queue_size * 4 + 2;
 	backend.init_window(&hold_win);
 	backend.init_window(&board_win);
