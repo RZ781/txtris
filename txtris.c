@@ -131,8 +131,8 @@ void ncurses_erase_line(int x, int y) {
 
 void ncurses_draw_cell(Window window, int x, int y, int color) {
 	int ch = ' ' | COLOR_PAIR(color);
-	mvwaddch(window.backend_data, y + 1, x + 1, ch);
-	mvwaddch(window.backend_data, y + 1, x + 2, ch);
+	mvwaddch(window.backend_data, y, x, ch);
+	mvwaddch(window.backend_data, y, x + 1, ch);
 }
 
 void ncurses_draw_box(Window window) {
@@ -155,8 +155,8 @@ Backend ncurses_backend = {
 
 #endif
 
-#ifdef RAYLIB_BACKEND
-extern Backend raylib_backend;
+#ifdef SDL3_BACKEND
+extern Backend sdl3_backend;
 #endif
 
 const char* program_name;
@@ -169,17 +169,6 @@ Window board_win, next_piece_win, hold_win;
 bool one_key_finesse = false;
 int pieces = 0;
 int ticks = 0;
-
-// color, rgb, default ncurses color, 8-bit color code
-const int colors[7][4] = {
-	{CITRUS_COLOR_I, 89, 154, 209},
-	{CITRUS_COLOR_J, 55, 67, 190},
-	{CITRUS_COLOR_L, 202, 99, 41},
-	{CITRUS_COLOR_O, 253, 255, 12},
-	{CITRUS_COLOR_S, 117, 174, 54},
-	{CITRUS_COLOR_T, 155, 55, 134},
-	{CITRUS_COLOR_Z, 188, 46, 61},
-};
 
 const char* clear_names[5] = {"", "Single", "Double", "Triple", "Quad"};
 
@@ -201,7 +190,7 @@ void update_window(Window win, const CitrusCell* data, int height, int width, in
 				color = 1;
 			else
 				color = 0;
-			backend.draw_cell(win, x * 2 + x_offset, height - 1 - y + y_offset, color);
+			backend.draw_cell(win, x * 2 + x_offset + 1, height - y + y_offset, color);
 		}
 	}
 	backend.draw_box(win);
@@ -296,12 +285,12 @@ int main(int argc, char** argv) {
 	int c;
 #ifdef NCURSES_BACKEND
 	backend = ncurses_backend;
-#elif defined RAYLIB_BACKEND
-	backend = raylib_backend;
+#elif defined SDL3_BACKEND
+	backend = sdl3_backend;
 #else
 #error "no backend selected"
 #endif
-	while ((c = getopt(argc, argv, "1cDrd:f:g:h:l:m:q:s:w:")) != -1) {
+	while ((c = getopt(argc, argv, "1cDSd:f:g:h:l:m:q:s:w:")) != -1) {
 		switch (c) {
 			case 'w':
 				config.width = string_to_int(optarg, 4);
@@ -339,12 +328,12 @@ int main(int argc, char** argv) {
 			case '1':
 				one_key_finesse = true;
 				break;
-			case 'r':
-#ifdef RAYLIB_BACKEND
-				backend = raylib_backend;
+			case 'S':
+#ifdef SDL3_BACKEND
+				backend = sdl3_backend;
 				break;
 #else
-				fprintf(stderr, "%s: raylib not included\n", program_name);
+				fprintf(stderr, "%s: sdl3 not included\n", program_name);
 				exit(-1);
 #endif
 			case '?':
