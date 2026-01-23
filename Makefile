@@ -17,15 +17,24 @@
 # <https://www.gnu.org/licenses/>.
 
 LIBCITRUS_PATH ?= libcitrus
-CFLAGS = -Wall -Wextra -Wpedantic -I$(LIBCITRUS_PATH)/include $(shell pkg-config --cflags ncursesw) $(shell pkg-config --cflags sdl3) -DNCURSES_BACKEND -DSDL3_BACKEND
+CFLAGS = -Wall -Wextra -Wpedantic -Iinclude -I$(LIBCITRUS_PATH)/include $(shell pkg-config --cflags ncursesw) $(shell pkg-config --cflags sdl3) -DNCURSES_BACKEND -DSDL3_BACKEND
+SOURCE := $(wildcard src/*.c)
+OBJECT := $(SOURCE:.c=.o)
+INCLUDE := $(wildcard include/*.h)
 
-.PHONY: libcitrus
+.PHONY: all clean distclean
 
-txtris: txtris.o sdl3.o libcitrus $(LIBCITRUS_PATH)/libcitrus.a
-	gcc -o txtris txtris.o sdl3.o -L"$(LIBCITRUS_PATH)" -Wl,-Bstatic -lcitrus -Wl,-Bdynamic $$(pkg-config --libs ncursesw) $$(pkg-config --libs sdl3)
+all: txtris
 
-libcitrus:
+clean:
+	rm $(OBJECT)
+
+distclean: clean
+	rm txtris
+
+txtris: $(OBJECT) $(LIBCITRUS_PATH)/libcitrus.a
 	make -C libcitrus
+	gcc -o $@ $(OBJECT) -L"$(LIBCITRUS_PATH)" -Wl,-Bstatic -lcitrus -Wl,-Bdynamic $$(pkg-config --libs ncursesw) $$(pkg-config --libs sdl3)
 
-%.o: %.c
+src/%.o: src/%.c $(INCLUDE)
 	gcc $(CFLAGS) -c $< -o $@
