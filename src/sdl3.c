@@ -80,7 +80,7 @@ void sdl3_full_update(void) {
 }
 
 void sdl3_update(Window window) {
-	SDL_RenderPresent(renderer);
+	(void) window;
 }
 
 void sdl3_print(int y, int x, const char* fmt, ...) {
