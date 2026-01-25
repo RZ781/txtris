@@ -17,24 +17,39 @@
 # <https://www.gnu.org/licenses/>.
 
 LIBCITRUS_PATH ?= libcitrus
-CFLAGS = -Wall -Wextra -Wpedantic -Iinclude -I$(LIBCITRUS_PATH)/include $(shell pkg-config --cflags ncursesw) $(shell pkg-config --cflags sdl3) -DNCURSES_BACKEND -DSDL3_BACKEND
-SOURCE := $(wildcard src/*.c)
-OBJECT := $(SOURCE:.c=.o)
-INCLUDE := $(wildcard include/*.h)
+USE_NCURSES ?= $(shell pkg-config ncursesw && echo 1 || echo 0)
+USE_SDL3 ?= $(shell pkg-config sdl3 && echo 1 || echo 0)
+CFLAGS := -Wall -Wextra -Wpedantic -Iinclude -I$(LIBCITRUS_PATH)/include
+LDFLAGS := -L"$(LIBCITRUS_PATH)" -Wl,-Bstatic -lcitrus -Wl,-Bdynamic $(LDFLAGS)
+SOURCE = src/txtris.c
+OBJECT = $(SOURCE:.c=.o)
+INCLUDE = $(wildcard include/*.h)
+
+ifeq ($(USE_NCURSES), 1)
+	CFLAGS += $(shell pkg-config --cflags ncursesw) -DNCURSES_BACKEND
+	LDFLAGS += $(shell pkg-config --libs ncursesw)
+	SOURCE += src/ncurses.c
+endif
+
+ifeq ($(USE_SDL3), 1)
+	CFLAGS += $(shell pkg-config --cflags sdl3) -DSDL3_BACKEND
+	LDFLAGS += $(shell pkg-config --libs sdl3)
+	SOURCE += src/sdl3.c
+endif
 
 .PHONY: all clean distclean
 
 all: txtris
 
 clean:
-	rm $(OBJECT)
+	$(RM) $(OBJECT)
 
 distclean: clean
-	rm txtris
+	$(RM) txtris
 
 txtris: $(OBJECT) $(LIBCITRUS_PATH)/libcitrus.a
-	make -C libcitrus
-	gcc -o $@ $(OBJECT) -L"$(LIBCITRUS_PATH)" -Wl,-Bstatic -lcitrus -Wl,-Bdynamic $$(pkg-config --libs ncursesw) $$(pkg-config --libs sdl3)
+	$(MAKE) -C libcitrus
+	$(CC) -o $@ $(OBJECT) $(LDFLAGS)
 
 src/%.o: src/%.c $(INCLUDE)
-	gcc $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
