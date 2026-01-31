@@ -48,7 +48,7 @@ void ncurses_exit(void) {
 	endwin();
 }
 
-int ncurses_get_key(int timeout) {
+KeyType ncurses_get_key(int timeout, int* key) {
 	struct pollfd fd = {STDIN_FILENO, POLLIN, 0};
 	if (poll(&fd, 1, timeout) == -1 && errno != EINTR) {
 		perror("poll");
@@ -57,14 +57,15 @@ int ncurses_get_key(int timeout) {
 	if (fd.revents & POLLIN) {
 		int ch = getch();
 		switch (ch) {
-			case KEY_LEFT: return K_LEFT;
-			case KEY_RIGHT: return K_RIGHT;
-			case KEY_UP: return K_UP;
-			case KEY_DOWN: return K_DOWN;
-			default: return ch;
+			case KEY_LEFT: *key = K_LEFT; break;
+			case KEY_RIGHT: *key = K_RIGHT; break;
+			case KEY_UP: *key = K_UP; break;
+			case KEY_DOWN: *key = K_DOWN; break;
+			default: *key = ch;
 		}
+		return KEYTYPE_PRESS;
 	}
-	return 0;
+	return KEYTYPE_NONE;
 }
 
 void ncurses_init_window(Window* window) {

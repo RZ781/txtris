@@ -33,10 +33,17 @@ typedef struct {
        void* backend_data;
 } Window;
 
+typedef enum {
+	KEYTYPE_NONE,
+	KEYTYPE_DOWN,
+	KEYTYPE_UP,
+	KEYTYPE_PRESS
+} KeyType;
+
 typedef struct Backend {
        void (*init)(void);
        void (*exit)(void);
-       int (*get_key)(int);
+       KeyType (*get_key)(int, int*);
        void (*init_window)(Window*);
        void (*full_update)(void);
        void (*update)(Window);

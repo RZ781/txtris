@@ -252,9 +252,10 @@ int main(int argc, char** argv) {
 		int ms_timeout = (1.0 / 60.0 - time_since_tick) * 1e3;
 		if (ms_timeout < 0)
 			ms_timeout = 0;
-		int c = backend.get_key(ms_timeout);
-		if (c != 0) {
-			if (one_key_finesse) {
+		int c;
+		KeyType type = backend.get_key(ms_timeout, &c);
+		if (one_key_finesse) {
+			if (type == KEYTYPE_PRESS || type == KEYTYPE_DOWN) {
 				int rotation, column;
 				for (rotation = 0; rotation < 4; rotation++) {
 					for (column = 0; column < 10; column++) {
@@ -287,7 +288,9 @@ int main(int argc, char** argv) {
 				} else if (c == ' ') {
 					CitrusGame_key_down(&game, CITRUS_KEY_HOLD);
 				}
-			} else {
+			}
+		} else {
+			if (type != KEYTYPE_NONE) {
 				int key = -1;
 				switch (c) {
 					case K_LEFT: key = CITRUS_KEY_LEFT; break;
@@ -299,7 +302,14 @@ int main(int argc, char** argv) {
 					case 'c': key = CITRUS_KEY_HOLD; break;
 					case 'a': key = CITRUS_KEY_180; break;
 				}
-				CitrusGame_key_down(&game, key);
+				if (type == KEYTYPE_DOWN) {
+					CitrusGame_key_down(&game, key);
+				} else if (type == KEYTYPE_UP) {
+					CitrusGame_key_up(&game, key);
+				} else if (type == KEYTYPE_PRESS) {
+					CitrusGame_key_down(&game, key);
+					CitrusGame_key_up(&game, key);
+				}
 			}
 		}
 		prev_time = curr_time;

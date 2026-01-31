@@ -52,23 +52,27 @@ void sdl3_exit(void) {
 	SDL_Quit();
 }
 
-int sdl3_get_key(int timeout) {
+KeyType sdl3_get_key(int timeout, int* key) {
 	SDL_Event event;
 	if (SDL_WaitEventTimeout(&event, timeout) == 0) {
-		return 0;
+		return KEYTYPE_NONE;
 	}
 	if (event.type == SDL_EVENT_QUIT)
 		exit(0);
-	if (event.type == SDL_EVENT_KEY_DOWN) {
-		switch (event.key.key) {
-			case SDLK_LEFT: return K_LEFT;
-			case SDLK_RIGHT: return K_RIGHT;
-			case SDLK_UP: return K_UP;
-			case SDLK_DOWN: return K_DOWN;
-			default: return event.key.key;
+	if (event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_UP) {
+		if (event.key.repeat) {
+			return KEYTYPE_NONE;
 		}
+		switch (event.key.key) {
+			case SDLK_LEFT: *key = K_LEFT; break;
+			case SDLK_RIGHT: *key = K_RIGHT; break;
+			case SDLK_UP: *key = K_UP; break;
+			case SDLK_DOWN: *key = K_DOWN; break;
+			default: *key = event.key.key;
+		}
+		return event.key.down ? KEYTYPE_DOWN : KEYTYPE_UP;
 	}
-	return 0;
+	return KEYTYPE_NONE;
 }
 
 void sdl3_init_window(Window* window) {
