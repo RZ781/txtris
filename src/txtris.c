@@ -167,7 +167,7 @@ int main(int argc, char** argv) {
 #else
 #error "no backend selected"
 #endif
-	while ((c = getopt(argc, argv, "1cDSd:f:g:h:l:m:q:s:w:")) != -1) {
+	while ((c = getopt(argc, argv, "1cDSa:d:f:g:h:l:L:m:q:s:w:")) != -1) {
 		switch (c) {
 			case 'w':
 				config.width = string_to_int(optarg, 4);
@@ -190,7 +190,7 @@ int main(int argc, char** argv) {
 			case 'q':
 				config.next_piece_queue_size = string_to_int(optarg, 0);
 				break;
-			case 'd':
+			case 'L':
 				config.line_clear_delay = string_to_int(optarg, 0);
 				break;
 			case 's':
@@ -204,6 +204,12 @@ int main(int argc, char** argv) {
 				break;
 			case '1':
 				one_key_finesse = true;
+				break;
+			case 'a':
+				config.arr = string_to_int(optarg, 1);
+				break;
+			case 'd':
+				config.das = string_to_int(optarg, 0);
 				break;
 			case 'S':
 #ifdef SDL3_BACKEND
