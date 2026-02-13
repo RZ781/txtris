@@ -274,25 +274,32 @@ int main(int argc, char** argv) {
 				if (rotation != 4) {
 					for (int i = 0; i < rotation; i++) {
 						CitrusGame_key_down(&game, CITRUS_KEY_CLOCKWISE);
+						CitrusGame_key_up(&game, CITRUS_KEY_CLOCKWISE);
 					}
 					if (column < 5) {
 						for (int i = 0; i < 10; i++) {
 							CitrusGame_key_down(&game, CITRUS_KEY_LEFT);
+							CitrusGame_key_up(&game, CITRUS_KEY_LEFT);
 						}
 						for (int i = 0; i < column; i++) {
 							CitrusGame_key_down(&game, CITRUS_KEY_RIGHT);
+							CitrusGame_key_up(&game, CITRUS_KEY_RIGHT);
 						}
 					} else {
 						for (int i = 0; i < 10; i++) {
 							CitrusGame_key_down(&game, CITRUS_KEY_RIGHT);
+							CitrusGame_key_up(&game, CITRUS_KEY_RIGHT);
 						}
 						for (int i = 0; i < 9 - column; i++) {
 							CitrusGame_key_down(&game, CITRUS_KEY_LEFT);
+							CitrusGame_key_up(&game, CITRUS_KEY_LEFT);
 						}
 					}
 					CitrusGame_key_down(&game, CITRUS_KEY_HARD_DROP);
+					CitrusGame_key_up(&game, CITRUS_KEY_HARD_DROP);
 				} else if (c == ' ') {
 					CitrusGame_key_down(&game, CITRUS_KEY_HOLD);
+					CitrusGame_key_up(&game, CITRUS_KEY_HOLD);
 				}
 			}
 		} else {
