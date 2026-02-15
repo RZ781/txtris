@@ -24,9 +24,6 @@
 #include "backend.h"
 #include "citrus.h"
 
-#define CELL_WIDTH 5
-#define CELL_HEIGHT 10
-
 const SDL_Color colors[7] = {
 	[CITRUS_COLOR_I] = {89, 154, 209},
 	[CITRUS_COLOR_J] = {55, 67, 190},
@@ -39,10 +36,12 @@ const SDL_Color colors[7] = {
 
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
+int cell_width = 5;
+int cell_height = 10;
 
 void sdl3_init(void) {
 	SDL_Init(SDL_INIT_VIDEO);
-	window = SDL_CreateWindow("txtris", CELL_WIDTH * 50, CELL_HEIGHT * 50, 0);
+	window = SDL_CreateWindow("txtris", cell_width * 50, cell_height * 50, SDL_WINDOW_RESIZABLE);
 	renderer = SDL_CreateRenderer(window, NULL);
 }
 
@@ -59,6 +58,16 @@ KeyType sdl3_get_key(int timeout, int* key) {
 	}
 	if (event.type == SDL_EVENT_QUIT)
 		exit(0);
+	if (event.type == SDL_EVENT_WINDOW_RESIZED) {
+		cell_width = event.window.data1 / 50;
+		cell_height = event.window.data2 / 50;
+		if (cell_width * 2 < cell_height) {
+			cell_height = cell_width * 2;
+		}
+		else {
+			cell_width = cell_height / 2;
+		}
+	}
 	if (event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_UP) {
 		if (event.key.repeat) {
 			return KEYTYPE_NONE;
@@ -93,10 +102,10 @@ void sdl3_print(int y, int x, const char* fmt, ...) {
 
 void sdl3_erase_window(Window window) {
 	SDL_FRect r = {
-		window.x * CELL_WIDTH,
-		window.y * CELL_HEIGHT,
-		window.width * CELL_WIDTH,
-		window.height * CELL_HEIGHT
+		window.x * cell_width,
+		window.y * cell_height,
+		window.width * cell_width,
+		window.height * cell_height
 	};
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderFillRect(renderer, &r);
@@ -116,10 +125,10 @@ void sdl3_draw_cell(Window window, int x, int y, int color) {
 		c = colors[color - 2];
 	}
 	SDL_FRect r = {
-		(window.x + x) * CELL_WIDTH,
-		(window.y + y) * CELL_HEIGHT,
-		CELL_WIDTH * 2,
-		CELL_HEIGHT
+		(window.x + x) * cell_width,
+		(window.y + y) * cell_height,
+		cell_width * 2,
+		cell_height
 	};
 	SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
 	SDL_RenderFillRect(renderer, &r);
@@ -127,10 +136,10 @@ void sdl3_draw_cell(Window window, int x, int y, int color) {
 
 void sdl3_draw_box(Window window) {
 	SDL_FRect r = {
-		window.x * CELL_WIDTH,
-		window.y * CELL_HEIGHT,
-		window.width * CELL_WIDTH,
-		window.height * CELL_HEIGHT
+		window.x * cell_width,
+		window.y * cell_height,
+		window.width * cell_width,
+		window.height * cell_height
 	};
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 	SDL_RenderRect(renderer, &r);
