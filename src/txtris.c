@@ -206,7 +206,7 @@ int main(int argc, char** argv) {
 				one_key_finesse = true;
 				break;
 			case 'a':
-				config.arr = string_to_int(optarg, 1);
+				config.arr = string_to_int(optarg, 0);
 				break;
 			case 'd':
 				config.das = string_to_int(optarg, 0);

@@ -52,7 +52,7 @@ txtris: $(OBJECT) $(LIBCITRUS_PATH)/libcitrus.a
 	$(CC) -o $@ $(OBJECT) $(LDFLAGS)
 
 $(LIBCITRUS_PATH)/libcitrus.a: FORCE
-	$(MAKE) -C libcitrus libcitrus.a
+	$(MAKE) -C $(LIBCITRUS_PATH) libcitrus.a
 
 %.o: %.c $(INCLUDE)
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
