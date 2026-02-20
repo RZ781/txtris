@@ -43,6 +43,8 @@ void sdl3_init(void) {
 	SDL_Init(SDL_INIT_VIDEO);
 	window = SDL_CreateWindow("txtris", cell_width * 50, cell_height * 50, SDL_WINDOW_RESIZABLE);
 	renderer = SDL_CreateRenderer(window, NULL);
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+	SDL_RenderClear(renderer);
 }
 
 void sdl3_exit(void) {
@@ -90,6 +92,8 @@ void sdl3_init_window(Window* window) {
 
 void sdl3_full_update(void) {
 	SDL_RenderPresent(renderer);
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+	SDL_RenderClear(renderer);
 }
 
 void sdl3_update(Window window) {
