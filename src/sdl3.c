@@ -18,6 +18,7 @@
  */
 
 #include <SDL3/SDL.h>
+#include <SDL3_ttf/SDL_ttf.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,13 +37,18 @@ const SDL_Color colors[7] = {
 
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
+TTF_TextEngine* text_engine = NULL;
+TTF_Font* font = NULL;
 int cell_width = 5;
 int cell_height = 10;
 
 void sdl3_init(void) {
 	SDL_Init(SDL_INIT_VIDEO);
+	TTF_Init();
 	window = SDL_CreateWindow("txtris", cell_width * 50, cell_height * 50, SDL_WINDOW_RESIZABLE);
 	renderer = SDL_CreateRenderer(window, NULL);
+	text_engine = TTF_CreateRendererTextEngine(renderer);
+	font = TTF_OpenFont("calibri.ttf", cell_height);
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
 }
@@ -69,6 +75,8 @@ KeyType sdl3_get_key(int timeout, int* key) {
 		else {
 			cell_width = cell_height / 2;
 		}
+		TTF_CloseFont(font);
+		font = TTF_OpenFont("calibri.ttf", cell_height);
 	}
 	if (event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_UP) {
 		if (event.key.repeat) {
@@ -101,7 +109,13 @@ void sdl3_update(Window window) {
 }
 
 void sdl3_print(int y, int x, const char* fmt, ...) {
-	// TODO
+	char buffer[512];
+	va_list args;
+	va_start(args, fmt);
+	vsnprintf(buffer, sizeof(buffer), fmt, args);
+	va_end(args);
+	TTF_Text* text = TTF_CreateText(text_engine, font, buffer, 0);
+	TTF_DrawRendererText(text, cell_width * x, cell_height * y);
 }
 
 void sdl3_erase_window(Window window) {

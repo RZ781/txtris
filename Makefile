@@ -32,8 +32,8 @@ ifeq ($(USE_NCURSES), 1)
 	SOURCE += src/ncurses.c
 endif
 ifeq ($(USE_SDL3), 1)
-	CPPFLAGS += $(shell pkg-config --cflags sdl3) -DSDL3_BACKEND
-	LDFLAGS += $(shell pkg-config --libs sdl3)
+	CPPFLAGS += $(shell pkg-config --cflags sdl3 sdl3-ttf) -DSDL3_BACKEND
+	LDFLAGS += $(shell pkg-config --libs sdl3 sdl3-ttf)
 	SOURCE += src/sdl3.c
 endif
 OBJECT := $(SOURCE:.c=.o)
