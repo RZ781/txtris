@@ -163,6 +163,13 @@ void sdl3_draw_box(Window window) {
 	SDL_RenderRect(renderer, &r);
 }
 
+void sdl3_get_size(int* width, int* height) {
+	int pixel_width, pixel_height;
+	SDL_GetWindowSize(window, &pixel_width, &pixel_height);
+	*width = pixel_width / cell_width;
+	*height = pixel_height / cell_height;
+}
+
 Backend sdl3_backend = {
 	.init = sdl3_init,
 	.exit = sdl3_exit,
@@ -174,5 +181,6 @@ Backend sdl3_backend = {
 	.erase_window = sdl3_erase_window,
 	.erase_line = sdl3_erase_line,
 	.draw_cell = sdl3_draw_cell,
-	.draw_box = sdl3_draw_box
+	.draw_box = sdl3_draw_box,
+	.get_size = sdl3_get_size
 };

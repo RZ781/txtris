@@ -52,6 +52,7 @@ typedef struct Backend {
        void (*erase_line)(int, int);
        void (*draw_cell)(Window, int, int, int);
        void (*draw_box)(Window);
+       void (*get_size)(int*, int*);
 } Backend;
 
 #endif

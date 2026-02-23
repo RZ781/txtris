@@ -108,6 +108,10 @@ void ncurses_draw_box(Window window) {
 	box(window.backend_data, 0, 0);
 }
 
+void ncurses_get_size(int* width, int* height) {
+	getmaxyx(stdscr, *height, *width);
+}
+
 Backend ncurses_backend = {
 	.init = ncurses_init,
 	.exit = ncurses_exit,
@@ -119,5 +123,6 @@ Backend ncurses_backend = {
 	.erase_window = ncurses_erase_window,
 	.erase_line = ncurses_erase_line,
 	.draw_cell = ncurses_draw_cell,
-	.draw_box = ncurses_draw_box
+	.draw_box = ncurses_draw_box,
+	.get_size = ncurses_get_size
 };
