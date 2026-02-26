@@ -29,11 +29,20 @@
 Backend backend;
 
 #ifdef NCURSES_BACKEND
+#define DEFAULT_BACKEND ncurses_backend
 extern Backend ncurses_backend;
 #endif
 
 #ifdef SDL3_BACKEND
+#ifndef DEFAULT_BACKEND
+#define DEFAULT_BACKEND sdl3_backend
+#endif
 extern Backend sdl3_backend;
+extern const char* font_path;
+#endif
+
+#ifndef DEFAULT_BACKEND
+#error "no backend selected"
 #endif
 
 const char* program_name;
@@ -160,14 +169,8 @@ int main(int argc, char** argv) {
 	program_name = argv[0];
 	config = citrus_preset_modern;
 	int c;
-#ifdef NCURSES_BACKEND
-	backend = ncurses_backend;
-#elif defined SDL3_BACKEND
-	backend = sdl3_backend;
-#else
-#error "no backend selected"
-#endif
-	while ((c = getopt(argc, argv, "1cDSa:d:f:g:h:l:L:m:q:s:w:")) != -1) {
+	backend = DEFAULT_BACKEND;
+	while ((c = getopt(argc, argv, "1cDSa:d:f:F:g:h:l:L:m:q:s:w:")) != -1) {
 		switch (c) {
 			case 'w':
 				config.width = string_to_int(optarg, 4);
@@ -211,11 +214,16 @@ int main(int argc, char** argv) {
 			case 'd':
 				config.das = string_to_int(optarg, 0);
 				break;
-			case 'S':
 #ifdef SDL3_BACKEND
+			case 'S':
 				backend = sdl3_backend;
 				break;
+			case 'F':
+				font_path = optarg;
+				break;
 #else
+			case 'S':
+			case 'F':
 				fprintf(stderr, "%s: sdl3 not included\n", program_name);
 				exit(-1);
 #endif
@@ -237,7 +245,6 @@ int main(int argc, char** argv) {
 	backend.init();
 	int width, height;
 	backend.get_size(&width, &height);
-	printf("%i %i\n", width, height);
 	board_win.width = config.width * 2 + 2;
 	board_win.height = config.full_height + 2;
 	board_win.x = (width - board_win.width) / 2;

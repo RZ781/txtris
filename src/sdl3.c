@@ -41,6 +41,7 @@ TTF_TextEngine* text_engine = NULL;
 TTF_Font* font = NULL;
 int cell_width = 5;
 int cell_height = 10;
+const char* font_path = "";
 
 void sdl3_init(void) {
 	SDL_Init(SDL_INIT_VIDEO);
@@ -48,7 +49,7 @@ void sdl3_init(void) {
 	window = SDL_CreateWindow("txtris", cell_width * 50, cell_height * 50, SDL_WINDOW_RESIZABLE);
 	renderer = SDL_CreateRenderer(window, NULL);
 	text_engine = TTF_CreateRendererTextEngine(renderer);
-	font = TTF_OpenFont("calibri.ttf", cell_height);
+	font = TTF_OpenFont(font_path, cell_height);
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
 }
@@ -76,7 +77,7 @@ KeyType sdl3_get_key(int timeout, int* key) {
 			cell_width = cell_height / 2;
 		}
 		TTF_CloseFont(font);
-		font = TTF_OpenFont("calibri.ttf", cell_height);
+		font = TTF_OpenFont(font_path, cell_height);
 	}
 	if (event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_UP) {
 		if (event.key.repeat) {
