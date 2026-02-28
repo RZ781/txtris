@@ -2,17 +2,17 @@
 `txtris` is a modern multiplayer stacker game implemented using
 [libcitrus](https://github.com/RZ781/libcitrus).
 
-To build, first initialise the libcitrus submodule with `git submodule
-update --init`.  Then, install ncurses development files with your
-distro's package manager and run `make`.
+To build, first initialise the libcitrus submodule with `git submodule update
+--init`.  Then, install ncurses and/or SDL3 development files with your distro's
+package manager and run `make`. Use `make help` for more information. If you
+are building on Windows, use MSYS2. You may need to disable the ncurses backend.
 
-After pulling, remember to run `git submodule update` to update the
-libcitrus submodule.
+After pulling, remember to run `git submodule update` to update the libcitrus
+submodule.
 
-txtris is free software, distributed under the terms of the GNU General
-Public License as published by the Free Software Foundation, either
-version 3 of the License or (at your option) any later version. See the
-file COPYING for more information. License copyright years may be listed
-using range notation, e.g., 1996-2015, indicating that every year in the
-range, inclusive, is a copyrightable year that would otherwise be listed
-individually.
+txtris is free software, distributed under the terms of the GNU General Public
+License as published by the Free Software Foundation, either version 3 of the
+License or (at your option) any later version. See the file COPYING for more
+information. License copyright years may be listed using range notation, e.g.,
+1996-2015, indicating that every year in the range, inclusive, is a
+copyrightable year that would otherwise be listed individually.

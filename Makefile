@@ -2,19 +2,17 @@
 #
 # This file is part of txtris.
 #
-# txtris is free software: you can redistribute it and/or modify it
-# under the terms of the GNU General Public License as published by the
-# Free Software Foundation, either version 3 of the License, or (at
-# your option) any later version.
+# txtris is free software: you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
 #
-# txtris is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-# for more details.
+# txtris is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see
-# <https://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU General Public License along with
+# this program.  If not, see <https://www.gnu.org/licenses/>.
 
 LIBCITRUS_PATH ?= libcitrus
 USE_NCURSES ?= $(shell pkg-config ncursesw && echo 1 || echo 0)
@@ -41,6 +39,19 @@ OBJECT := $(SOURCE:.c=.o)
 .PHONY: all clean distclean FORCE
 
 all: txtris
+
+help:
+	@echo "Targets:"
+	@echo "clean     - remove object files"
+	@echo "distclean - remove object and executable files"
+	@echo "all       - build txtris and libcitrus"
+	@echo
+	@echo "Options - make clean before changing these:"
+	@echo "CFLAGS          - extra compilation options"
+	@echo "LDFLAGS         - extra linking options"
+	@echo "LIBCITRUS_PATH  - alternative path for libcitrus"
+	@echo "USE_NCURSES=1/0 - enable/disable ncurses backend"
+	@echo "USE_SDL3=1/0    - enable/disable SDL3 backend"
 
 clean:
 	$(RM) $(OBJECT)
