@@ -257,6 +257,7 @@ int main(int argc, char** argv) {
 	next_piece_win.height = config.next_piece_queue_size * 4 + 2;
 	next_piece_win.x = board_win.x + board_win.width;
 	next_piece_win.y = board_win.y;
+	backend.set_target_size(next_piece_win.x + next_piece_win.width, board_win.y + board_win.height);
 	backend.init_window(&hold_win);
 	backend.init_window(&board_win);
 	backend.init_window(&next_piece_win);

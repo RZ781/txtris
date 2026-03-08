@@ -41,12 +41,14 @@ TTF_TextEngine* text_engine = NULL;
 TTF_Font* font = NULL;
 int cell_width = 5;
 int cell_height = 10;
+int target_width = 50;
+int target_height = 50;
 const char* font_path = "";
 
 void sdl3_init(void) {
 	SDL_Init(SDL_INIT_VIDEO);
 	TTF_Init();
-	window = SDL_CreateWindow("txtris", cell_width * 50, cell_height * 50, SDL_WINDOW_RESIZABLE);
+	window = SDL_CreateWindow("txtris", cell_width * target_width, cell_height * target_height, SDL_WINDOW_RESIZABLE);
 	renderer = SDL_CreateRenderer(window, NULL);
 	text_engine = TTF_CreateRendererTextEngine(renderer);
 	font = TTF_OpenFont(font_path, cell_height);
@@ -68,8 +70,8 @@ KeyType sdl3_get_key(int timeout, int* key) {
 	if (event.type == SDL_EVENT_QUIT)
 		exit(0);
 	if (event.type == SDL_EVENT_WINDOW_RESIZED) {
-		cell_width = event.window.data1 / 50;
-		cell_height = event.window.data2 / 50;
+		cell_width = event.window.data1 / target_width;
+		cell_height = event.window.data2 / target_height;
 		if (cell_width * 2 < cell_height) {
 			cell_height = cell_width * 2;
 		}
@@ -171,6 +173,11 @@ void sdl3_get_size(int* width, int* height) {
 	*height = pixel_height / cell_height;
 }
 
+void sdl3_set_target_size(int width, int height) {
+	target_width = width;
+	target_height = height;
+}
+
 Backend sdl3_backend = {
 	.init = sdl3_init,
 	.exit = sdl3_exit,
@@ -183,5 +190,6 @@ Backend sdl3_backend = {
 	.erase_line = sdl3_erase_line,
 	.draw_cell = sdl3_draw_cell,
 	.draw_box = sdl3_draw_box,
-	.get_size = sdl3_get_size
+	.get_size = sdl3_get_size,
+	.set_target_size = sdl3_set_target_size,
 };

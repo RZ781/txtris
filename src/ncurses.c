@@ -112,6 +112,10 @@ void ncurses_get_size(int* width, int* height) {
 	getmaxyx(stdscr, *height, *width);
 }
 
+void ncurses_set_target_size(int width, int height) {
+	(void) width; (void) height;
+}
+
 Backend ncurses_backend = {
 	.init = ncurses_init,
 	.exit = ncurses_exit,
@@ -124,5 +128,6 @@ Backend ncurses_backend = {
 	.erase_line = ncurses_erase_line,
 	.draw_cell = ncurses_draw_cell,
 	.draw_box = ncurses_draw_box,
-	.get_size = ncurses_get_size
+	.get_size = ncurses_get_size,
+	.set_target_size = ncurses_set_target_size
 };

@@ -53,6 +53,7 @@ typedef struct Backend {
        void (*draw_cell)(Window, int, int, int);
        void (*draw_box)(Window);
        void (*get_size)(int*, int*);
+       void (*set_target_size)(int, int);
 } Backend;
 
 #endif
