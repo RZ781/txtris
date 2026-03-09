@@ -1,8 +1,4 @@
-#include <errno.h>
 #include <ncurses.h>
-#include <poll.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include "backend.h"
 #include "citrus.h"
 
@@ -48,24 +44,19 @@ void ncurses_exit(void) {
 	endwin();
 }
 
-KeyType ncurses_get_key(int timeout, int* key) {
-	struct pollfd fd = {STDIN_FILENO, POLLIN, 0};
-	if (poll(&fd, 1, timeout) == -1 && errno != EINTR) {
-		perror("poll");
-		exit(-1);
+KeyType ncurses_get_key(int ms_timeout, int* key) {
+	timeout(ms_timeout);
+	int ch = getch();
+	switch (ch) {
+		case KEY_LEFT: *key = K_LEFT; break;
+		case KEY_RIGHT: *key = K_RIGHT; break;
+		case KEY_UP: *key = K_UP; break;
+		case KEY_DOWN: *key = K_DOWN; break;
+		case KEY_RESIZE: *key = K_RESIZE; break;
+		case ERR: return KEYTYPE_NONE;
+		default: *key = ch;
 	}
-	if (fd.revents & POLLIN) {
-		int ch = getch();
-		switch (ch) {
-			case KEY_LEFT: *key = K_LEFT; break;
-			case KEY_RIGHT: *key = K_RIGHT; break;
-			case KEY_UP: *key = K_UP; break;
-			case KEY_DOWN: *key = K_DOWN; break;
-			default: *key = ch;
-		}
-		return KEYTYPE_PRESS;
-	}
-	return KEYTYPE_NONE;
+	return KEYTYPE_PRESS;
 }
 
 void ncurses_init_window(Window* window) {
@@ -98,6 +89,10 @@ void ncurses_erase_line(int x, int y) {
  	clrtoeol();
 }
 
+void ncurses_clear_screen(void) {
+	erase();
+}
+
 void ncurses_draw_cell(Window window, int x, int y, int color) {
 	int ch = ' ' | COLOR_PAIR(color);
 	mvwaddch(window.backend_data, y, x, ch);
@@ -116,18 +111,25 @@ void ncurses_set_target_size(int width, int height) {
 	(void) width; (void) height;
 }
 
+void ncurses_resize_window(Window* window) {
+	mvwin(window->backend_data, window->y, window->x);
+	wresize(window->backend_data, window->height, window->width);
+}
+
 Backend ncurses_backend = {
 	.init = ncurses_init,
 	.exit = ncurses_exit,
 	.get_key = ncurses_get_key,
 	.init_window = ncurses_init_window,
+	.resize_window = ncurses_resize_window,
 	.full_update = ncurses_full_update,
 	.update = ncurses_update,
 	.print = ncurses_print,
 	.erase_window = ncurses_erase_window,
 	.erase_line = ncurses_erase_line,
+	.clear_screen = ncurses_clear_screen,
 	.draw_cell = ncurses_draw_cell,
 	.draw_box = ncurses_draw_box,
 	.get_size = ncurses_get_size,
-	.set_target_size = ncurses_set_target_size
+	.set_target_size = ncurses_set_target_size,
 };

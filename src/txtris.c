@@ -165,6 +165,23 @@ int string_to_int(const char* s, int minimum) {
 	return i;
 }
 
+void resize(void) {
+	int width, height;
+	backend.get_size(&width, &height);
+	board_win.width = config.width * 2 + 2;
+	board_win.height = config.full_height + 2;
+	board_win.x = (width - board_win.width) / 2;
+	board_win.y = 4;
+	hold_win.width = 10;
+	hold_win.height = 6;
+	hold_win.x = board_win.x - hold_win.width - 2;
+	hold_win.y = board_win.y;
+	next_piece_win.width = 10;
+	next_piece_win.height = config.next_piece_queue_size * 4 + 2;
+	next_piece_win.x = board_win.x + board_win.width;
+	next_piece_win.y = board_win.y;
+}
+
 int main(int argc, char** argv) {
 	program_name = argv[0];
 	config = citrus_preset_modern;
@@ -243,20 +260,7 @@ int main(int argc, char** argv) {
 	}
 	init_citrus();
 	backend.init();
-	int width, height;
-	backend.get_size(&width, &height);
-	board_win.width = config.width * 2 + 2;
-	board_win.height = config.full_height + 2;
-	board_win.x = (width - board_win.width) / 2;
-	board_win.y = 4;
-	hold_win.width = 10;
-	hold_win.height = 6;
-	hold_win.x = board_win.x - hold_win.width - 2;
-	hold_win.y = board_win.y;
-	next_piece_win.width = 10;
-	next_piece_win.height = config.next_piece_queue_size * 4 + 2;
-	next_piece_win.x = board_win.x + board_win.width;
-	next_piece_win.y = board_win.y;
+	resize();
 	backend.set_target_size(next_piece_win.x + next_piece_win.width, board_win.y + board_win.height);
 	backend.init_window(&hold_win);
 	backend.init_window(&board_win);
@@ -271,6 +275,13 @@ int main(int argc, char** argv) {
 			ms_timeout = 0;
 		int c;
 		KeyType type = backend.get_key(ms_timeout, &c);
+		if (type != KEYTYPE_NONE && c == K_RESIZE) {
+			resize();
+			backend.clear_screen();
+			backend.resize_window(&hold_win);
+			backend.resize_window(&board_win);
+			backend.resize_window(&next_piece_win);
+		}
 		if (one_key_finesse) {
 			if (type == KEYTYPE_PRESS || type == KEYTYPE_DOWN) {
 				int rotation, column;

@@ -24,6 +24,7 @@
 #define K_RIGHT (-2)
 #define K_UP    (-3)
 #define K_DOWN  (-4)
+#define K_RESIZE (-5)
 
 typedef struct {
        int x;
@@ -45,11 +46,13 @@ typedef struct Backend {
        void (*exit)(void);
        KeyType (*get_key)(int, int*);
        void (*init_window)(Window*);
+       void (*resize_window)(Window*);
        void (*full_update)(void);
        void (*update)(Window);
        void (*print)(int, int, const char*, ...);
        void (*erase_window)(Window);
        void (*erase_line)(int, int);
+       void (*clear_screen)(void);
        void (*draw_cell)(Window, int, int, int);
        void (*draw_box)(Window);
        void (*get_size)(int*, int*);
