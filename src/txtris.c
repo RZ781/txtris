@@ -261,7 +261,7 @@ int main(int argc, char** argv) {
 	init_citrus();
 	backend.init();
 	resize();
-	backend.set_target_size(next_piece_win.x + next_piece_win.width, board_win.y + board_win.height);
+	backend.set_target_size(config.width * 2 + 28, config.full_height + 8);
 	backend.init_window(&hold_win);
 	backend.init_window(&board_win);
 	backend.init_window(&next_piece_win);

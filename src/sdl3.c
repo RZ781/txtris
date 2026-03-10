@@ -72,14 +72,14 @@ KeyType sdl3_get_key(int timeout, int* key) {
 	if (event.type == SDL_EVENT_WINDOW_RESIZED) {
 		cell_width = event.window.data1 / target_width;
 		cell_height = event.window.data2 / target_height;
-		if (cell_width * 2 < cell_height) {
-			cell_height = cell_width * 2;
-		}
-		else {
+		if (cell_width * 2 > cell_height) {
 			cell_width = cell_height / 2;
 		}
+		cell_height = cell_width * 2;
 		TTF_CloseFont(font);
 		font = TTF_OpenFont(font_path, cell_height);
+		*key = K_RESIZE;
+		return KEYTYPE_PRESS;
 	}
 	if (event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_UP) {
 		if (event.key.repeat) {
@@ -98,6 +98,10 @@ KeyType sdl3_get_key(int timeout, int* key) {
 }
 
 void sdl3_init_window(Window* window) {
+	(void) window;
+}
+
+void sdl3_resize_window(Window* window) {
 	(void) window;
 }
 
@@ -134,6 +138,11 @@ void sdl3_erase_window(Window window) {
 
 void sdl3_erase_line(int x, int y) {
 	// TODO
+}
+
+void sdl3_clear_screen(void) {
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+	SDL_RenderClear(renderer);
 }
 
 void sdl3_draw_cell(Window window, int x, int y, int color) {
@@ -183,11 +192,13 @@ Backend sdl3_backend = {
 	.exit = sdl3_exit,
 	.get_key = sdl3_get_key,
 	.init_window = sdl3_init_window,
+	.resize_window = sdl3_resize_window,
 	.full_update = sdl3_full_update,
 	.update = sdl3_update,
 	.print = sdl3_print,
 	.erase_window = sdl3_erase_window,
 	.erase_line = sdl3_erase_line,
+	.clear_screen = sdl3_clear_screen,
 	.draw_cell = sdl3_draw_cell,
 	.draw_box = sdl3_draw_box,
 	.get_size = sdl3_get_size,
